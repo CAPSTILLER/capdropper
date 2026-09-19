@@ -19,278 +19,57 @@
       --font-mono: "JetBrains Mono", "Courier New", monospace;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: radial-gradient(circle at 50% 0%, #1c1505 0%, var(--bg) 75%); color: var(--text-main); min-height: 100vh; padding: 24px; }
+    .container { max-width: 1080px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--card-border); padding-bottom: 16px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #fff 20%, var(--gold-bright) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .tag { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--gold-primary); color: var(--gold-bright); padding: 3px 8px; border-radius: 999px; font-size: 11px; font-family: var(--font-mono); text-transform: uppercase; }
+    .wallet-status { display: flex; align-items: center; gap: 12px; }
+    .btn { background: linear-gradient(135deg, #d97706, #f59e0b); color: #000; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s ease; font-size: 13px; }
+    .btn:hover { box-shadow: 0 0 15px var(--gold-glow); transform: translateY(-1px); }
+    .btn-secondary { background: #1f2937; color: var(--text-main); border: 1px solid #374151; }
+    .btn-secondary:hover { background: #374151; box-shadow: none; }
+    .btn-small { padding: 6px 12px; font-size: 12px; }
 
-    body {
-      background: radial-gradient(circle at 50% 0%, #1c1505 0%, var(--bg) 75%);
-      color: var(--text-main);
-      min-height: 100vh;
-      padding: 24px;
-    }
+    .gate-banner { background: rgba(26, 20, 8, 0.7); border: 1px solid #78350f; border-radius: 12px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+    .gate-indicator { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 13px; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+    .status-dot.locked { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
 
-    .container {
-      max-width: 1080px;
-      margin: 0 auto;
-    }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .tab-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid #2d3748; color: var(--text-muted); padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
+    .tab-btn.active { background: var(--gold-primary); color: #000; border-color: var(--gold-bright); }
+    .panel { display: none; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .panel.active { display: block; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    .form-control { width: 100%; background: #111422; border: 1px solid #282f44; color: var(--text-main); padding: 12px 14px; border-radius: 8px; font-family: var(--font-mono); font-size: 14px; }
+    .form-control:focus { outline: none; border-color: var(--gold-primary); }
+    .form-control:read-only { background: #0c0e18; color: var(--gold-bright); border-color: #3b3524; cursor: not-allowed; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .shortcut-tokens { display: flex; gap: 8px; margin-top: 8px; }
+    .token-chip { background: #1e2235; border: 1px solid #323952; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gold-bright); font-family: var(--font-mono); }
+    .token-chip:hover { border-color: var(--gold-primary); }
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      border-bottom: 1px solid var(--card-border);
-      padding-bottom: 16px;
-    }
+    /* Interactive Gate Chooser */
+    .gate-selector-wrap { background: #0d101a; border: 1px solid #3b3524; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+    .selector-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .gate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+    .nft-card { background: #141824; border: 2px solid #282f44; border-radius: 10px; padding: 12px; cursor: pointer; transition: all 0.2s; position: relative; text-align: center; }
+    .nft-card:hover { border-color: #4b5563; }
+    .nft-card.selected { border-color: var(--gold-primary); background: #221c0e; box-shadow: 0 0 15px var(--gold-glow); }
+    .nft-card img { width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 8px; background: #080a0f; }
+    .nft-title { font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 4px; }
+    .nft-sub { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+    .nft-supply-badge { display: inline-block; background: rgba(245, 158, 11, 0.2); border: 1px solid var(--gold-primary); color: var(--gold-bright); font-size: 11px; font-family: var(--font-mono); padding: 2px 6px; border-radius: 4px; margin-top: 6px; }
+    .badge-check { position: absolute; top: 8px; right: 8px; background: var(--gold-primary); color: #000; font-size: 10px; font-weight: 800; border-radius: 4px; padding: 2px 6px; display: none; }
+    .nft-card.selected .badge-check { display: block; }
 
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .brand h1 {
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #fff 20%, var(--gold-bright) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .tag {
-      background: rgba(245, 158, 11, 0.15);
-      border: 1px solid var(--gold-primary);
-      color: var(--gold-bright);
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-family: var(--font-mono);
-      text-transform: uppercase;
-    }
-
-    .wallet-status {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn {
-      background: linear-gradient(135deg, #d97706, #f59e0b);
-      color: #000;
-      font-weight: 700;
-      padding: 10px 18px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 13px;
-    }
-
-    .btn:hover {
-      box-shadow: 0 0 15px var(--gold-glow);
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary {
-      background: #1f2937;
-      color: var(--text-main);
-      border: 1px solid #374151;
-    }
-
-    .btn-secondary:hover {
-      background: #374151;
-      box-shadow: none;
-    }
-
-    .gate-banner {
-      background: rgba(26, 20, 8, 0.7);
-      border: 1px solid #78350f;
-      border-radius: 12px;
-      padding: 14px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .gate-indicator {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-family: var(--font-mono);
-      font-size: 13px;
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent-green);
-      box-shadow: 0 0 8px var(--accent-green);
-    }
-
-    .status-dot.locked {
-      background: var(--accent-red);
-      box-shadow: 0 0 8px var(--accent-red);
-    }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-
-    .tab-btn {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid #2d3748;
-      color: var(--text-muted);
-      padding: 10px 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-      transition: all 0.2s;
-    }
-
-    .tab-btn.active {
-      background: var(--gold-primary);
-      color: #000;
-      border-color: var(--gold-bright);
-    }
-
-    .panel {
-      display: none;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .panel.active {
-      display: block;
-    }
-
-    .form-group {
-      margin-bottom: 18px;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
-      color: var(--text-muted);
-      font-weight: 500;
-    }
-
-    .form-control {
-      width: 100%;
-      background: #111422;
-      border: 1px solid #282f44;
-      color: var(--text-main);
-      padding: 12px 14px;
-      border-radius: 8px;
-      font-family: var(--font-mono);
-      font-size: 14px;
-    }
-
-    .form-control:focus {
-      outline: none;
-      border-color: var(--gold-primary);
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-
-    .shortcut-tokens {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .token-chip {
-      background: #1e2235;
-      border: 1px solid #323952;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      color: var(--gold-bright);
-      font-family: var(--font-mono);
-    }
-
-    .token-chip:hover {
-      border-color: var(--gold-primary);
-    }
-
-    .preview-box {
-      background: #0d101a;
-      border: 1px dashed var(--gold-primary);
-      padding: 16px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-
-    .preview-box h4 {
-      color: var(--gold-bright);
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-
-    .preview-stat {
-      display: flex;
-      justify-content: space-between;
-      font-size: 13px;
-      margin-bottom: 4px;
-      font-family: var(--font-mono);
-    }
-
-    .grid-drops {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
-
-    .drop-card {
-      background: #111422;
-      border: 1px solid #282f44;
-      border-radius: 10px;
-      padding: 16px;
-    }
-
-    .drop-card.active-drop {
-      border-color: var(--gold-primary);
-    }
-
-    .drop-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .nft-list {
-      margin-top: 14px;
-      border-top: 1px solid #282f44;
-      padding-top: 10px;
-    }
-
-    .nft-badge {
-      display: inline-block;
-      background: #1e243a;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      margin: 2px;
-      font-family: var(--font-mono);
-    }
+    .preview-box { background: #0d101a; border: 1px dashed var(--gold-primary); padding: 18px; border-radius: 10px; margin-bottom: 20px; }
+    .preview-box h4 { color: var(--gold-bright); margin-bottom: 12px; font-size: 15px; }
+    .preview-stat { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; font-family: var(--font-mono); }
   </style>
 </head>
 <body>
@@ -298,20 +77,21 @@
     <header>
       <div class="brand">
         <h1>CAPdropper 🪂👑</h1>
-        <span class="tag">Midas Gate Edition</span>
+        <span class="tag">Base Mainnet</span>
       </div>
       <div class="wallet-status">
+        <span class="tag" style="border-color: #374151; color: var(--text-muted);">Vault: 0x17Db...b9F7</span>
         <button id="btnConnect" class="btn" onclick="connectWallet()">Connect Wallet</button>
       </div>
     </header>
 
     <div class="gate-banner">
       <div class="gate-indicator">
-        <div id="gateDot" class="status-dot locked"></div>
-        <span id="gateStatusText">Midas Gate Access: Checking status...</span>
+        <div id="gateDot" class="status-dot"></div>
+        <span id="gateStatusText">Midas Gate Registry: Active on Base</span>
       </div>
       <div style="font-family: var(--font-mono); font-size: 12px; color: var(--gold-bright);">
-        Registry: 0x54C3...a263
+        Registry: 0x54C3C8C9E2180c6b90652983d1c15cF933f1a263
       </div>
     </div>
 
@@ -323,15 +103,15 @@
 
     <!-- TAB 1: CREATE DROP -->
     <div id="panel-create" class="panel active">
-      <h3 style="margin-bottom: 16px; color: var(--gold-bright);">Create Midas Gated Airdrop</h3>
+      <h3 style="margin-bottom: 16px; color: var(--gold-bright);">Deposit Tokens & Snapshot Active Gate NFTs</h3>
       
       <div class="form-group">
         <label>ERC-20 Token Contract Address (Base)</label>
-        <input type="text" id="tokenAddress" class="form-control" placeholder="0x..." value="0x22af33fe49fd1fa80c7149773dde5890d3c76f3b">
+        <input type="text" id="tokenAddress" class="form-control" value="0x22af33fe49fd1fa80c7149773dde5890d3c76f3b">
         <div class="shortcut-tokens">
-          <span class="token-chip" onclick="setToken('0x22af33fe49fd1fa80c7149773dde5890d3c76f3b', '$BNKR')">$BNKR</span>
-          <span class="token-chip" onclick="setToken('0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', 'USDC')">USDC</span>
-          <span class="token-chip" onclick="setToken('0x4200000000000000000000000000000000000006', 'WETH')">WETH</span>
+          <span class="token-chip" onclick="setToken('0x22af33fe49fd1fa80c7149773dde5890d3c76f3b')">$BNKR</span>
+          <span class="token-chip" onclick="setToken('0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913')">USDC</span>
+          <span class="token-chip" onclick="setToken('0x4200000000000000000000000000000000000006')">WETH</span>
         </div>
       </div>
 
@@ -341,8 +121,34 @@
           <input type="number" id="totalAmount" class="form-control" placeholder="10000" value="10000" oninput="updatePreview()">
         </div>
         <div class="form-group">
-          <label>Total Eligible NFT Supply in Gate</label>
-          <input type="number" id="totalNFTs" class="form-control" placeholder="100" value="100" oninput="updatePreview()">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="margin-bottom: 0;">Automated Gate NFT Split Count</label>
+            <button id="btnToggleChoose" class="btn btn-secondary btn-small" onclick="toggleGateChooser()">Choose Gate NFTs</button>
+          </div>
+          <input type="text" id="splitDisplay" class="form-control" readonly value="Auto: 138 Minted NFTs across 1 Active Gate">
+        </div>
+      </div>
+
+      <!-- EXPANDABLE GATE CHOOSER GRID -->
+      <div id="gateChooserWrap" class="gate-selector-wrap" style="display: none;">
+        <div class="selector-head">
+          <div>
+            <strong style="color: var(--gold-bright); font-size: 14px;">Active Midas Gate Contracts & Token Supplies</strong>
+            <p style="font-size: 12px; color: var(--text-muted);">Tap a contract card to isolate selection. If no card is chosen, drop splits evenly across all active gate token IDs.</p>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-small" onclick="selectAllGates()">Select All</button>
+            <button class="btn btn-secondary btn-small" onclick="resetGateSelection()">Reset / Default</button>
+          </div>
+        </div>
+        <div id="gateGrid" class="gate-grid">
+          <div class="nft-card selected" id="card-0" onclick="toggleCard(0)">
+            <span class="badge-check">✓ ACTIVE</span>
+            <img src="https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F542ec31c-a924-4c24-ab7f-56339a679000%2Fpublic" alt="Letters to CAP">
+            <div class="nft-title">Letters to CAP</div>
+            <div class="nft-sub">0x23D9...a661</div>
+            <div class="nft-supply-badge">138 Minted Token IDs</div>
+          </div>
         </div>
       </div>
 
@@ -352,28 +158,36 @@
           <input type="number" id="duration" class="form-control" value="604800" placeholder="604800 (7 days)">
         </div>
         <div class="form-group">
-          <label>Treasury Address (10% on expiration)</label>
-          <input type="text" id="treasury" class="form-control" placeholder="Default owner if empty">
+          <label>Protocol Treasury (Locked Fee Recipient)</label>
+          <input type="text" id="treasury" class="form-control" readonly value="0xA12506f742F4AB0980a57264871DB56A1A150793">
         </div>
       </div>
 
       <div class="preview-box">
-        <h4>Drop Telemetry Preview</h4>
+        <h4>Telemetry & Distribution Breakdown</h4>
         <div class="preview-stat">
-          <span>Active Gate Registry:</span>
-          <span>0x54C3C8C9E2180c6b90652983d1c15cf933f1a263</span>
+          <span>Escrow Vault:</span>
+          <span>0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7</span>
         </div>
         <div class="preview-stat">
-          <span>Snapshotted Collections:</span>
-          <span id="previewCollection">0x23D9c8259A672b9F32Ba862cA6ed6B860575a661</span>
+          <span>Midas Gate Registry:</span>
+          <span>0x54C3C8C9E2180c6b90652983d1c15cF933f1a263</span>
         </div>
         <div class="preview-stat">
-          <span>Calculated Payout Per NFT:</span>
-          <strong id="previewPerNFT" style="color: var(--gold-bright);">100 Tokens / NFT</strong>
+          <span>Active Gate Contracts Counted:</span>
+          <span id="previewActiveContracts" style="color: var(--gold-bright);">1 Contract (Letters to CAP)</span>
         </div>
         <div class="preview-stat">
-          <span>Expiration Split:</span>
-          <span>90% Creator Refund / 10% Treasury Fee</span>
+          <span>Total Minted Token IDs for Split:</span>
+          <strong id="previewTotalNFTs" style="color: var(--gold-bright);">138 Token IDs</strong>
+        </div>
+        <div class="preview-stat">
+          <span>Even Payout Per NFT:</span>
+          <strong id="previewPerNFT" style="color: var(--gold-bright); font-size: 15px;">72.4637 Tokens / NFT</strong>
+        </div>
+        <div class="preview-stat">
+          <span>Expiration Settlement:</span>
+          <span>90% Creator Refund / 10% to Protocol Treasury (0xA125...793)</span>
         </div>
       </div>
 
@@ -386,65 +200,48 @@
     <!-- TAB 2: CLAIM PORTAL -->
     <div id="panel-claim" class="panel">
       <h3 style="margin-bottom: 16px; color: var(--gold-bright);">Active Midas Gate Drops</h3>
-      <div id="activeDropsContainer" class="grid-drops">
-        <div class="drop-card active-drop">
-          <div class="drop-header">
-            <strong>Drop #1 (Demo)</strong>
-            <span class="tag">Active</span>
+      <div id="activeDropsContainer">
+        <div style="background: #111422; border: 1px solid #282f44; border-radius: 10px; padding: 18px; max-width: 500px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <strong>Drop #1</strong>
+            <span class="tag">Active on Base</span>
           </div>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
-            Token: <strong>$CAP / $BNKR</strong>
-          </p>
-          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
-            Payout: <strong>100 Tokens / NFT</strong>
-          </p>
-          <div class="nft-list">
-            <span style="font-size: 12px; color: var(--gold-bright);">Eligible NFTs Owned:</span>
-            <div>
-              <span class="nft-badge">#442 (King Midas)</span>
-              <span class="nft-badge">#859</span>
-            </div>
-            <button class="btn" style="width: 100%; margin-top: 10px;" onclick="claimTokens(1, 442)">Claim 100 Tokens for #442</button>
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">
+            Token: <strong>$BNKR</strong> (0x22af...6f3b)
           </div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+            Collection: <strong>Letters to CAP</strong> (0x23D9...a661)
+          </div>
+          <div class="form-group">
+            <label>NFT Token ID Owned</label>
+            <input type="number" id="claimTokenId" class="form-control" placeholder="e.g. 4" value="4">
+          </div>
+          <button class="btn" style="width: 100%;" onclick="claimTokens()">Claim Airdrop for NFT</button>
         </div>
       </div>
     </div>
 
     <!-- TAB 3: SETTLEMENTS -->
     <div id="panel-settle" class="panel">
-      <h3 style="margin-bottom: 16px; color: var(--gold-bright);">Expired Drops & Creator Settlements</h3>
+      <h3 style="margin-bottom: 16px; color: var(--gold-bright);">Expired Drops & Protocol Settlements</h3>
       <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
-        Once a drop's duration expires, finalize the pool to release 90% of unclaimed tokens back to the sponsor and 10% to the treasury.
+        When a drop expires, 90% of unclaimed tokens refund to the creator and 10% route to protocol treasury (0xA125...793).
       </p>
-
       <div class="form-group">
         <label>Drop ID to Finalize</label>
         <div style="display: flex; gap: 10px;">
-          <input type="number" id="finalizeDropId" class="form-control" placeholder="1" style="max-width: 140px;">
-          <button class="btn btn-secondary" onclick="finalizeDrop()">Finalize Drop (90/10 Split)</button>
+          <input type="number" id="finalizeDropId" class="form-control" placeholder="1" value="1" style="max-width: 140px;">
+          <button class="btn btn-secondary" onclick="finalizeDrop()">Finalize Pool (90/10 Split)</button>
         </div>
       </div>
-
-      <hr style="border: none; border-top: 1px solid #282f44; margin: 24px 0;">
-
-      <h4 style="color: var(--gold-bright); margin-bottom: 12px;">Your Pending Balances</h4>
-      <div class="preview-box">
-        <div class="preview-stat">
-          <span>Claimable Creator Refunds:</span>
-          <span id="pendingCreatorRefund">0 Tokens</span>
-        </div>
-        <div class="preview-stat">
-          <span>Claimable Treasury Fees:</span>
-          <span id="pendingTreasury">0 Tokens</span>
-        </div>
-      </div>
-      <button class="btn" onclick="withdrawPending()">Withdraw Available Balances</button>
     </div>
   </div>
 
   <script>
     let userAddress = null;
-    const MIDAS_GATE = "0x54C3C8C9E2180c6b90652983d1c15cf933f1a263";
+    let availableGates = [
+      { id: 0, name: "Letters to CAP", collection: "0x23D9c8259A672b9F32Ba862cA6ed6B860575a661", mintedSupply: 138, selected: true }
+    ];
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -453,16 +250,73 @@
       event.target.classList.add('active');
     }
 
-    function setToken(addr, symbol) {
+    function setToken(addr) {
       document.getElementById('tokenAddress').value = addr;
       updatePreview();
     }
 
+    function toggleGateChooser() {
+      const wrap = document.getElementById('gateChooserWrap');
+      const btn = document.getElementById('btnToggleChoose');
+      if (wrap.style.display === 'none') {
+        wrap.style.display = 'block';
+        btn.innerText = 'Hide Gate NFTs';
+      } else {
+        wrap.style.display = 'none';
+        btn.innerText = 'Choose Gate NFTs';
+      }
+    }
+
+    function toggleCard(id) {
+      availableGates[id].selected = !availableGates[id].selected;
+      const card = document.getElementById('card-' + id);
+      if (card) {
+        if (availableGates[id].selected) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      }
+      updatePreview();
+    }
+
+    function selectAllGates() {
+      availableGates.forEach((g, idx) => {
+        g.selected = true;
+        const card = document.getElementById('card-' + idx);
+        if (card) card.classList.add('selected');
+      });
+      updatePreview();
+    }
+
+    function resetGateSelection() {
+      availableGates.forEach((g, idx) => {
+        g.selected = true;
+        const card = document.getElementById('card-' + idx);
+        if (card) card.classList.add('selected');
+      });
+      updatePreview();
+    }
+
+    function getSelectedSupply() {
+      const sel = availableGates.filter(g => g.selected);
+      if (sel.length === 0) {
+        return availableGates.reduce((acc, g) => acc + g.mintedSupply, 0);
+      }
+      return sel.reduce((acc, g) => acc + g.mintedSupply, 0);
+    }
+
     function updatePreview() {
-      const total = parseFloat(document.getElementById('totalAmount').value) || 0;
-      const nfts = parseFloat(document.getElementById('totalNFTs').value) || 1;
-      const perNFT = (total / nfts).toFixed(4);
-      document.getElementById('previewPerNFT').innerText = perNFT + " Tokens / NFT";
+      const totalAmt = parseFloat(document.getElementById('totalAmount').value) || 0;
+      const supply = getSelectedSupply();
+      const selCount = availableGates.filter(g => g.selected).length || availableGates.length;
+
+      const perNFT = supply > 0 ? (totalAmt / supply).toFixed(4) : "0.0000";
+
+      document.getElementById('splitDisplay').value = `Auto: ${supply} Minted NFTs across ${selCount} Active Gate(s)`;
+      document.getElementById('previewActiveContracts').innerText = `${selCount} Contract(s)`;
+      document.getElementById('previewTotalNFTs').innerText = `${supply} Token IDs`;
+      document.getElementById('previewPerNFT').innerText = `${perNFT} Tokens / NFT`;
     }
 
     async function connectWallet() {
@@ -471,41 +325,36 @@
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           userAddress = accounts[0];
           document.getElementById('btnConnect').innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-          checkGateAccess();
         } catch (e) {
           alert("Wallet connection failed: " + e.message);
         }
       } else {
-        alert("Please install Rabby, MetaMask, or use inside Bankr terminal!");
+        alert("Connect inside Bankr terminal or with an injected EVM wallet.");
       }
     }
 
-    async function checkGateAccess() {
-      // Simulate/read gate check on Base
-      document.getElementById('gateDot').className = "status-dot";
-      document.getElementById('gateStatusText').innerText = "Midas Gate Access: AUTHORIZED (King Midas #442)";
-    }
-
     function approveToken() {
-      alert("Triggering ERC20 approve transaction on Base...");
+      alert("Approve token for vault: 0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7");
     }
 
     function fundDrop() {
-      alert("Calling fundDropWithMidasGate on CAPdropper...");
+      const supply = getSelectedSupply();
+      const totalAmt = document.getElementById('totalAmount').value || "10000";
+      alert(`Funding drop with ${totalAmt} tokens evenly split across ${supply} token IDs.`);
     }
 
-    function claimTokens(dropId, tokenId) {
-      alert(`Claiming rewards for Drop #${dropId} with NFT #${tokenId}...`);
+    function claimTokens() {
+      const tid = document.getElementById('claimTokenId').value;
+      alert(`Claiming drop 1 for Token ID #${tid}...`);
     }
 
     function finalizeDrop() {
       const id = document.getElementById('finalizeDropId').value;
-      alert(`Finalizing expired Drop #${id}. 90% credited to creator, 10% to treasury.`);
+      alert(`Finalizing expired Drop #${id}...`);
     }
 
-    function withdrawPending() {
-      alert("Withdrawing all pending balances from CAPdropper vault...");
-    }
+    // Initialize preview on load
+    updatePreview();
   </script>
 </body>
 </html>
