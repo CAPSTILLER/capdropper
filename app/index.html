@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CAPdropper Terminal — Midas Gate Airdrop Portal</title>
+  <style>
+    :root {
+      --bg: #090a0f;
+      --card-bg: rgba(18, 20, 32, 0.85);
+      --card-border: #2a2517;
+      --gold-primary: #f59e0b;
+      --gold-bright: #fbbf24;
+      --gold-glow: rgba(245, 158, 11, 0.35);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --font-mono: "JetBrains Mono", "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #1c1505 0%, var(--bg) 75%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 20%, var(--gold-bright) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tag {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-bright);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .wallet-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      color: #000;
+      font-weight: 700;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 13px;
+    }
+
+    .btn:hover {
+      box-shadow: 0 0 15px var(--gold-glow);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #1f2937;
+      color: var(--text-main);
+      border: 1px solid #374151;
+    }
+
+    .btn-secondary:hover {
+      background: #374151;
+      box-shadow: none;
+    }
+
+    .gate-banner {
+      background: rgba(26, 20, 8, 0.7);
+      border: 1px solid #78350f;
+      border-radius: 12px;
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .gate-indicator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 8px var(--accent-green);
+    }
+
+    .status-dot.locked {
+      background: var(--accent-red);
+      box-shadow: 0 0 8px var(--accent-red);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #2d3748;
+      color: var(--text-muted);
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--gold-primary);
+      color: #000;
+      border-color: var(--gold-bright);
+    }
+
+    .panel {
+      display: none;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .form-control {
+      width: 100%;
+      background: #111422;
+      border: 1px solid #282f44;
+      color: var(--text-main);
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--gold-primary);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .shortcut-tokens {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .token-chip {
+      background: #1e2235;
+      border: 1px solid #323952;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--gold-bright);
+      font-family: var(--font-mono);
+    }
+
+    .token-chip:hover {
+      border-color: var(--gold-primary);
+    }
+
+    .preview-box {
+      background: #0d101a;
+      border: 1px dashed var(--gold-primary);
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .preview-box h4 {
+      color: var(--gold-bright);
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .preview-stat {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      margin-bottom: 4px;
+      font-family: var(--font-mono);
+    }
+
+    .grid-drops {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .drop-card {
+      background: #111422;
+      border: 1px solid #282f44;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .drop-card.active-drop {
+      border-color: var(--gold-primary);
+    }
+
+    .drop-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .nft-list {
+      margin-top: 14px;
+      border-top: 1px solid #282f44;
+      padding-top: 10px;
+    }
+
+    .nft-badge {
+      display: inline-block;
+      background: #1e243a;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin: 2px;
+      font-family: var(--font-mono);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <h1>CAPdropper 🪂👑</h1>
+        <span class="tag">Midas Gate Edition</span>
+      </div>
+      <div class="wallet-status">
+        <button id="btnConnect" class="btn" onclick="connectWallet()">Connect Wallet</button>
+      </div>
+    </header>
+
+    <div class="gate-banner">
+      <div class="gate-indicator">
+        <div id="gateDot" class="status-dot locked"></div>
+        <span id="gateStatusText">Midas Gate Access: Checking status...</span>
+      </div>
+      <div style="font-family: var(--font-mono); font-size: 12px; color: var(--gold-bright);">
+        Registry: 0x54C3...a263
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('create')">1. Create & Fund Drop</button>
+      <button class="tab-btn" onclick="switchTab('claim')">2. Claim Portal</button>
+      <button class="tab-btn" onclick="switchTab('settle')">3. Expirations & Settlements</button>
+    </div>
+
+    <!-- TAB 1: CREATE DROP -->
+    <div id="panel-create" class="panel active">
+      <h3 style="margin-bottom: 16px; color: var(--gold-bright);">Create Midas Gated Airdrop</h3>
+      
+      <div class="form-group">
+        <label>ERC-20 Token Contract Address (Base)</label>
+        <input type="text" id="tokenAddress" class="form-control" placeholder="0x..." value="0x22af33fe49fd1fa80c7149773dde5890d3c76f3b">
+        <div class="shortcut-tokens">
+          <span class="token-chip" onclick="setToken('0x22af33fe49fd1fa80c7149773dde5890d3c76f3b', '$BNKR')">$BNKR</span>
+          <span class="token-chip" onclick="setToken('0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', 'USDC')">USDC</span>
+          <span class="token-chip" onclick="setToken('0x4200000000000000000000000000000000000006', 'WETH')">WETH</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Total Drop Amount</label>
+          <input type="number" id="totalAmount" class="form-control" placeholder="10000" value="10000" oninput="updatePreview()">
+        </div>
+        <div class="form-group">
+          <label>Total Eligible NFT Supply in Gate</label>
+          <input type="number" id="totalNFTs" class="form-control" placeholder="100" value="100" oninput="updatePreview()">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Duration (Seconds)</label>
+          <input type="number" id="duration" class="form-control" value="604800" placeholder="604800 (7 days)">
+        </div>
+        <div class="form-group">
+          <label>Treasury Address (10% on expiration)</label>
+          <input type="text" id="treasury" class="form-control" placeholder="Default owner if empty">
+        </div>
+      </div>
+
+      <div class="preview-box">
+        <h4>Drop Telemetry Preview</h4>
+        <div class="preview-stat">
+          <span>Active Gate Registry:</span>
+          <span>0x54C3C8C9E2180c6b90652983d1c15cf933f1a263</span>
+        </div>
+        <div class="preview-stat">
+          <span>Snapshotted Collections:</span>
+          <span id="previewCollection">0x23D9c8259A672b9F32Ba862cA6ed6B860575a661</span>
+        </div>
+        <div class="preview-stat">
+          <span>Calculated Payout Per NFT:</span>
+          <strong id="previewPerNFT" style="color: var(--gold-bright);">100 Tokens / NFT</strong>
+        </div>
+        <div class="preview-stat">
+          <span>Expiration Split:</span>
+          <span>90% Creator Refund / 10% Treasury Fee</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <button class="btn btn-secondary" onclick="approveToken()">Step 1: Approve Token</button>
+        <button class="btn" onclick="fundDrop()">Step 2: Fund Drop Escrow</button>
+      </div>
+    </div>
+
+    <!-- TAB 2: CLAIM PORTAL -->
+    <div id="panel-claim" class="panel">
+      <h3 style="margin-bottom: 16px; color: var(--gold-bright);">Active Midas Gate Drops</h3>
+      <div id="activeDropsContainer" class="grid-drops">
+        <div class="drop-card active-drop">
+          <div class="drop-header">
+            <strong>Drop #1 (Demo)</strong>
+            <span class="tag">Active</span>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+            Token: <strong>$CAP / $BNKR</strong>
+          </p>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+            Payout: <strong>100 Tokens / NFT</strong>
+          </p>
+          <div class="nft-list">
+            <span style="font-size: 12px; color: var(--gold-bright);">Eligible NFTs Owned:</span>
+            <div>
+              <span class="nft-badge">#442 (King Midas)</span>
+              <span class="nft-badge">#859</span>
+            </div>
+            <button class="btn" style="width: 100%; margin-top: 10px;" onclick="claimTokens(1, 442)">Claim 100 Tokens for #442</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SETTLEMENTS -->
+    <div id="panel-settle" class="panel">
+      <h3 style="margin-bottom: 16px; color: var(--gold-bright);">Expired Drops & Creator Settlements</h3>
+      <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
+        Once a drop's duration expires, finalize the pool to release 90% of unclaimed tokens back to the sponsor and 10% to the treasury.
+      </p>
+
+      <div class="form-group">
+        <label>Drop ID to Finalize</label>
+        <div style="display: flex; gap: 10px;">
+          <input type="number" id="finalizeDropId" class="form-control" placeholder="1" style="max-width: 140px;">
+          <button class="btn btn-secondary" onclick="finalizeDrop()">Finalize Drop (90/10 Split)</button>
+        </div>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid #282f44; margin: 24px 0;">
+
+      <h4 style="color: var(--gold-bright); margin-bottom: 12px;">Your Pending Balances</h4>
+      <div class="preview-box">
+        <div class="preview-stat">
+          <span>Claimable Creator Refunds:</span>
+          <span id="pendingCreatorRefund">0 Tokens</span>
+        </div>
+        <div class="preview-stat">
+          <span>Claimable Treasury Fees:</span>
+          <span id="pendingTreasury">0 Tokens</span>
+        </div>
+      </div>
+      <button class="btn" onclick="withdrawPending()">Withdraw Available Balances</button>
+    </div>
+  </div>
+
+  <script>
+    let userAddress = null;
+    const MIDAS_GATE = "0x54C3C8C9E2180c6b90652983d1c15cf933f1a263";
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function setToken(addr, symbol) {
+      document.getElementById('tokenAddress').value = addr;
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const total = parseFloat(document.getElementById('totalAmount').value) || 0;
+      const nfts = parseFloat(document.getElementById('totalNFTs').value) || 1;
+      const perNFT = (total / nfts).toFixed(4);
+      document.getElementById('previewPerNFT').innerText = perNFT + " Tokens / NFT";
+    }
+
+    async function connectWallet() {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          userAddress = accounts[0];
+          document.getElementById('btnConnect').innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+          checkGateAccess();
+        } catch (e) {
+          alert("Wallet connection failed: " + e.message);
+        }
+      } else {
+        alert("Please install Rabby, MetaMask, or use inside Bankr terminal!");
+      }
+    }
+
+    async function checkGateAccess() {
+      // Simulate/read gate check on Base
+      document.getElementById('gateDot').className = "status-dot";
+      document.getElementById('gateStatusText').innerText = "Midas Gate Access: AUTHORIZED (King Midas #442)";
+    }
+
+    function approveToken() {
+      alert("Triggering ERC20 approve transaction on Base...");
+    }
+
+    function fundDrop() {
+      alert("Calling fundDropWithMidasGate on CAPdropper...");
+    }
+
+    function claimTokens(dropId, tokenId) {
+      alert(`Claiming rewards for Drop #${dropId} with NFT #${tokenId}...`);
+    }
+
+    function finalizeDrop() {
+      const id = document.getElementById('finalizeDropId').value;
+      alert(`Finalizing expired Drop #${id}. 90% credited to creator, 10% to treasury.`);
+    }
+
+    function withdrawPending() {
+      alert("Withdrawing all pending balances from CAPdropper vault...");
+    }
+  </script>
+</body>
+</html>
