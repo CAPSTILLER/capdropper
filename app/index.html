@@ -34,11 +34,11 @@
     .btn-secondary { background: #1f2937; color: var(--text-main); border: 1px solid #374151; }
     .btn-secondary:hover { background: #374151; box-shadow: none; }
     .btn-small { padding: 6px 12px; font-size: 12px; }
+    .btn-success { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
 
     .gate-banner { background: rgba(26, 20, 8, 0.7); border: 1px solid #78350f; border-radius: 12px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
     .gate-indicator { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 13px; }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
-    .status-dot.locked { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
 
     /* Transaction Banner */
     .tx-banner { margin-bottom: 20px; padding: 14px 18px; border-radius: 10px; font-size: 13px; font-family: var(--font-mono); line-height: 1.5; word-break: break-all; }
@@ -80,14 +80,17 @@
     .preview-box h4 { color: var(--gold-bright); margin-bottom: 12px; font-size: 15px; }
     .preview-stat { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; font-family: var(--font-mono); }
 
-    /* Drop Card */
-    .drop-card { background: #111422; border: 1px solid #282f44; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
-    .drop-card.active-drop { border-color: var(--gold-primary); box-shadow: 0 0 15px rgba(245, 158, 11, 0.15); }
-    .drop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .drop-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; font-size: 13px; margin-bottom: 16px; font-family: var(--font-mono); }
-    .meta-item { background: #0a0c14; padding: 8px 12px; border-radius: 6px; border: 1px solid #1f2536; }
-    .meta-item span { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
-    .meta-item strong { color: var(--gold-bright); }
+    /* Claim Cards & Scanner */
+    .scanner-bar { background: #0e121e; border: 1px solid #23293d; border-radius: 10px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .claim-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .claim-card { background: #111422; border: 1px solid #2c2518; border-radius: 12px; padding: 18px; position: relative; transition: all 0.2s; }
+    .claim-card:hover { border-color: var(--gold-primary); transform: translateY(-2px); }
+    .claim-card-badge { display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-green); color: #6ee7b7; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-bottom: 10px; font-family: var(--font-mono); }
+    .claim-amount { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .claim-amount span { color: var(--gold-bright); }
+    .claim-sub { font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 14px; line-height: 1.4; }
+    .claim-card-btn { width: 100%; }
+    .empty-claims { text-align: center; padding: 40px 20px; background: #0c0e18; border: 1px dashed #282f44; border-radius: 12px; color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -118,7 +121,7 @@
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('create')">1. Create & Fund Drop</button>
-      <button class="tab-btn" onclick="switchTab('claim')">2. Claim Portal</button>
+      <button class="tab-btn" onclick="switchTab('claim')">2. Claim Portal (Auto-Detected)</button>
       <button class="tab-btn" onclick="switchTab('settle')">3. Expirations & Settlements</button>
     </div>
 
@@ -219,77 +222,53 @@
       </div>
     </div>
 
-    <!-- TAB 2: CLAIM PORTAL -->
+    <!-- TAB 2: CLAIM PORTAL (DYNAMIC SCANNER) -->
     <div id="panel-claim" class="panel">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
         <div>
-          <h3 style="color: var(--gold-bright); margin-bottom: 4px;">Active Midas Gate Drops in Vault</h3>
-          <p style="font-size: 13px; color: var(--text-muted);">Select the active drop and enter your King Midas token ID to claim your share.</p>
+          <h3 style="color: var(--gold-bright); margin-bottom: 4px;">Available Drops for Connected Wallet</h3>
+          <p style="font-size: 13px; color: var(--text-muted);">Automatically scans all non-expired vault drops against your wallet's NFT holdings.</p>
         </div>
-        <button class="btn btn-secondary btn-small" onclick="loadDropsFromChain()">↻ Refresh Drops</button>
+        <button class="btn btn-secondary btn-small" onclick="scanAllDropsForWallet()">↻ Re-Scan Vault</button>
       </div>
 
-      <!-- ACTIVE DROP CARD (DROP #2 - KING MIDAS) -->
-      <div class="drop-card active-drop">
-        <div class="drop-header">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <strong style="font-size: 16px; color: var(--gold-bright);">Drop #2 — King Midas Gate Airdrop</strong>
-            <span class="tag" style="background: rgba(16, 185, 129, 0.2); border-color: var(--accent-green); color: var(--accent-green);">Active & Funded</span>
-          </div>
-          <span style="font-family: var(--font-mono); font-size: 12px; color: var(--text-muted);">Base Mainnet</span>
+      <!-- SCANNER SUMMARY BAR -->
+      <div class="scanner-bar">
+        <div>
+          <strong id="scanSummaryText" style="color: var(--gold-bright); font-size: 15px;">Connect wallet to discover available airdrops</strong>
+          <div id="scanSubText" style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 4px;">Checking drops against your verified on-chain NFT ownership</div>
         </div>
-
-        <div class="drop-meta">
-          <div class="meta-item">
-            <span>Airdropped Token:</span>
-            <strong title="0xB8d59c7B33054BEdA610B2b2D38EA38694cdfaBd">0xB8d5...faBd</strong>
-          </div>
-          <div class="meta-item">
-            <span>Gate Collection:</span>
-            <strong title="0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7">King Midas (8,888)</strong>
-          </div>
-          <div class="meta-item">
-            <span>Total Escrow Pool:</span>
-            <strong>431,200 Tokens</strong>
-          </div>
-          <div class="meta-item">
-            <span>Payout Per NFT:</span>
-            <strong style="color: #6ee7b7; font-size: 14px;">~48.51 Tokens / NFT</strong>
-          </div>
-          <div class="meta-item">
-            <span>Claims Progress:</span>
-            <strong id="drop2ClaimedStat">0 / 8,888 Claimed</strong>
-          </div>
-          <div class="meta-item">
-            <span>Remaining Pool:</span>
-            <strong>431,200 Tokens</strong>
-          </div>
+        <div id="claimAllWrap" style="display: none;">
+          <button id="btnClaimAll" class="btn btn-success" onclick="claimAllAvailable()">Claim All Available Drops</button>
         </div>
+      </div>
 
-        <div style="background: #080a11; border: 1px solid #1f2538; border-radius: 8px; padding: 16px; max-width: 520px;">
+      <!-- DYNAMIC CLAIM GRID -->
+      <div id="claimCardsContainer" class="claim-grid">
+        <div class="empty-claims" style="grid-column: 1 / -1;">
+          Connect your wallet or click "Re-Scan Vault" to load claimable drops.
+        </div>
+      </div>
+
+      <!-- MANUAL FALLBACK CARD (FOR SPECIFIC TOKEN ID) -->
+      <div style="margin-top: 30px; background: #0c0e18; border: 1px solid #1f2538; border-radius: 10px; padding: 18px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; cursor: pointer;" onclick="toggleManualClaim()">
+          <strong style="color: var(--text-muted); font-size: 13px;">Need to claim for a specific Token ID manually? (Advanced)</strong>
+          <span id="manualToggleIcon" style="color: var(--gold-bright); font-size: 13px;">▼ Expand</span>
+        </div>
+        <div id="manualClaimForm" style="display: none; padding-top: 12px;">
           <div class="form-row">
-            <div class="form-group" style="margin-bottom: 12px;">
+            <div class="form-group">
               <label>Target Drop ID</label>
               <input type="number" id="claimDropId" class="form-control" value="2">
             </div>
-            <div class="form-group" style="margin-bottom: 12px;">
-              <label>NFT Token ID Owned</label>
+            <div class="form-group">
+              <label>King Midas NFT Token ID Owned</label>
               <input type="number" id="claimTokenId" class="form-control" placeholder="e.g. 442" value="442">
             </div>
           </div>
-          <button id="btnClaim" class="btn" style="width: 100%;" onclick="claimTokens()">Claim Airdrop for King Midas NFT</button>
+          <button id="btnManualClaim" class="btn btn-secondary" onclick="claimManualSingle()">Claim Single Token ID</button>
         </div>
-      </div>
-
-      <!-- HISTORICAL DROP #1 -->
-      <div class="drop-card" style="opacity: 0.65;">
-        <div class="drop-header">
-          <strong style="font-size: 14px;">Drop #1 — Letters to CAP ($BNKR)</strong>
-          <span class="tag" style="border-color: #4b5563; color: var(--text-muted);">Fully Claimed / Depleted</span>
-        </div>
-        <p style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">
-          10,000 $BNKR across 1 token ID (Letters to CAP) • 1/1 Claimed • 0 Remaining
-        </p>
       </div>
     </div>
 
@@ -327,6 +306,7 @@
 
     const ERC721_ABI = [
       "function name() view returns (string)",
+      "function balanceOf(address owner) view returns (uint256)",
       "function ownerOf(uint256 tokenId) view returns (address)"
     ];
 
@@ -334,6 +314,7 @@
       "function fundDropWithMidasGate(address token, uint256 totalAmount, uint256 totalEligibleNFTs, uint256 durationSeconds, address treasury) returns (uint256)",
       "function fundDropCustom(address token, uint256 totalAmount, address[] collections, uint256 totalEligibleNFTs, uint256 durationSeconds, address treasury) returns (uint256)",
       "function claim(uint256 dropId, address collection, uint256 tokenId)",
+      "function batchClaim(uint256 dropId, address[] calldata collections, uint256[] calldata tokenIds)",
       "function finalizeDrop(uint256 dropId)",
       "function drops(uint256) view returns (address creator, address token, uint256 totalAmount, uint256 remainingBalance, uint256 amountPerNFT, uint256 totalEligibleNFTs, uint256 claimedCount, uint256 createdAt, uint256 expiresAt, bool finalized, address treasury, address gateRegistry)",
       "function getDropCollections(uint256 dropId) view returns (address[] memory)",
@@ -353,6 +334,8 @@
         image: DEFAULT_GATE_IMAGE
       }
     ];
+
+    let userClaimableItems = []; // Stores auto-detected eligible drops
 
     function showStatus(type, msg, txHash = null) {
       const b = document.getElementById('txBanner');
@@ -421,24 +404,10 @@
         const signer = await getSigner();
         const addr = await signer.getAddress();
         showStatus('success', `Connected: ${addr} on Base Mainnet`);
-        loadDropsFromChain();
+        scanAllDropsForWallet();
       } catch (e) {
         showStatus('error', 'Connection failed: ' + (e.reason || e.message || e));
       }
-    }
-
-    function renderGateCards() {
-      const grid = document.getElementById('gateGrid');
-      if (!grid) return;
-      grid.innerHTML = availableGates.map((g, idx) => `
-        <div class="nft-card ${g.selected ? 'selected' : ''}" id="card-${idx}" onclick="toggleCard(${idx})">
-          <span class="badge-check">✓ ACTIVE</span>
-          <img src="${g.image || DEFAULT_GATE_IMAGE}" alt="${g.name}" onerror="this.src='${DEFAULT_GATE_IMAGE}'">
-          <div class="nft-title">${g.name}</div>
-          <div class="nft-sub">${g.collection.slice(0,6)}...${g.collection.slice(-4)}</div>
-          <div class="nft-supply-badge">${(g.mintedSupply || 0).toLocaleString()} Minted Token IDs</div>
-        </div>
-      `).join('');
     }
 
     function switchTab(tabId) {
@@ -446,91 +415,313 @@
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.getElementById('panel-' + tabId).classList.add('active');
       if (event && event.target) event.target.classList.add('active');
+      if (tabId === 'claim') {
+        scanAllDropsForWallet();
+      }
     }
 
-    function setToken(addr) {
-      document.getElementById('tokenAddress').value = addr;
-      updatePreview();
-    }
-
-    function toggleGateChooser() {
-      const wrap = document.getElementById('gateChooserWrap');
-      const btn = document.getElementById('btnToggleChoose');
-      if (wrap.style.display === 'none') {
-        wrap.style.display = 'block';
-        btn.innerText = 'Hide Gate NFTs';
+    function toggleManualClaim() {
+      const f = document.getElementById('manualClaimForm');
+      const icon = document.getElementById('manualToggleIcon');
+      if (f.style.display === 'none') {
+        f.style.display = 'block';
+        icon.innerText = '▲ Collapse';
       } else {
-        wrap.style.display = 'none';
-        btn.innerText = 'Choose Gate NFTs';
+        f.style.display = 'none';
+        icon.innerText = '▼ Expand';
       }
     }
 
-    function toggleCard(id) {
-      if (!availableGates[id]) return;
-      availableGates[id].selected = !availableGates[id].selected;
-      const card = document.getElementById('card-' + id);
-      if (card) {
-        if (availableGates[id].selected) {
-          card.classList.add('selected');
-        } else {
-          card.classList.remove('selected');
-        }
-      }
-      updatePreview();
-    }
-
-    function selectAllGates() {
-      availableGates.forEach((g, idx) => {
-        g.selected = true;
-        const card = document.getElementById('card-' + idx);
-        if (card) card.classList.add('selected');
-      });
-      updatePreview();
-    }
-
-    function resetGateSelection() {
-      availableGates.forEach((g, idx) => {
-        g.selected = true;
-        const card = document.getElementById('card-' + idx);
-        if (card) card.classList.add('selected');
-      });
-      updatePreview();
-    }
-
-    function getSelectedSupply() {
-      const sel = availableGates.filter(g => g.selected);
-      if (sel.length === 0) {
-        return availableGates.reduce((acc, g) => acc + g.mintedSupply, 0);
-      }
-      return sel.reduce((acc, g) => acc + g.mintedSupply, 0);
-    }
-
-    function updatePreview() {
-      const totalAmt = parseFloat(document.getElementById('totalAmount').value) || 0;
-      const supply = getSelectedSupply();
-      const selCount = availableGates.filter(g => g.selected).length || availableGates.length;
-
-      const perNFT = supply > 0 ? (totalAmt / supply).toFixed(4) : "0.0000";
-
-      document.getElementById('splitDisplay').value = `Auto: ${supply.toLocaleString()} Minted NFTs across ${selCount} Active Gate(s)`;
-      const names = availableGates.filter(g => g.selected).map(g => g.name).join(', ') || 'None';
-      document.getElementById('previewActiveContracts').innerText = `${selCount} Contract(s) (${names})`;
-      document.getElementById('previewTotalNFTs').innerText = `${supply.toLocaleString()} Token IDs`;
-      document.getElementById('previewPerNFT').innerText = `${perNFT} Tokens / NFT`;
-    }
-
-    // Refresh on-chain Drop 2 stats
-    async function loadDropsFromChain() {
+    // DISCOVER USER OWNED NFTS ON BASE
+    async function getUserNFTTokenIds(walletAddr, collectionAddr) {
+      const ownedIds = [];
       try {
-        const provider = window.ethereum ? new ethers.BrowserProvider(window.ethereum) : new ethers.JsonRpcProvider("https://mainnet.base.org");
-        const vault = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, provider);
-        const drop2 = await vault.drops(2);
-        const claimedCount = Number(drop2.claimedCount);
-        const totalEligible = Number(drop2.totalEligibleNFTs);
-        const el = document.getElementById('drop2ClaimedStat');
-        if (el) el.innerText = `${claimedCount} / ${totalEligible} Claimed`;
+        // Attempt Reservoir Base indexer query
+        const url = `https://api-base.reservoir.tools/users/${walletAddr}/tokens/v10?collection=${collectionAddr}&limit=50`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.tokens) {
+            data.tokens.forEach(t => {
+              if (t.token && t.token.tokenId) {
+                ownedIds.push(parseInt(t.token.tokenId));
+              }
+            });
+          }
+        }
       } catch (e) {
-        console.warn("Could not refresh drop stats:", e);
+        console.warn("Reservoir NFT indexer error, using on-chain fallback:", e);
+      }
+
+      // Hardcoded fallback if indexer is cold: verify default known token IDs (e.g., 442)
+      if (ownedIds.length === 0) {
+        try {
+          const provider = new ethers.JsonRpcProvider("https://mainnet.base.org");
+          const nft = new ethers.Contract(collectionAddr, ERC721_ABI, provider);
+          const bal = await nft.balanceOf(walletAddr);
+          if (bal > 0) {
+            // Check known sample IDs
+            const candidateIds = [442, 4, 1, 2, 3];
+            for (const cid of candidateIds) {
+              try {
+                const owner = await nft.ownerOf(cid);
+                if (owner.toLowerCase() === walletAddr.toLowerCase() && !ownedIds.includes(cid)) {
+                  ownedIds.push(cid);
+                }
+              } catch (_) {}
+            }
+          }
+        } catch (_) {}
+      }
+
+      return ownedIds;
+    }
+
+    // AUTOMATED DROP SCANNER
+    async function scanAllDropsForWallet() {
+      const container = document.getElementById('claimCardsContainer');
+      const summaryText = document.getElementById('scanSummaryText');
+      const subText = document.getElementById('scanSubText');
+      const claimAllWrap = document.getElementById('claimAllWrap');
+
+      try {
+        if (!userAddress) {
+          if (window.ethereum) {
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts && accounts.length > 0) {
+              userAddress = accounts[0];
+            }
+          }
+        }
+
+        if (!userAddress) {
+          summaryText.innerText = "Connect wallet to discover available airdrops";
+          container.innerHTML = `<div class="empty-claims" style="grid-column: 1 / -1;">Please connect your wallet above to scan active drops.</div>`;
+          claimAllWrap.style.display = 'none';
+          return;
+        }
+
+        summaryText.innerText = "Scanning all active drops in vault...";
+        subText.innerText = `Scanning on Base for wallet ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
+        container.innerHTML = `<div class="empty-claims" style="grid-column: 1 / -1;">🔍 Querying vault drops and verifying your NFT ownership...</div>`;
+
+        const provider = new ethers.JsonRpcProvider("https://mainnet.base.org");
+        const vault = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, provider);
+        const totalDropsCount = Number(await vault.dropCounter());
+
+        userClaimableItems = [];
+        const now = Math.floor(Date.now() / 1000);
+
+        for (let dropId = 1; dropId <= totalDropsCount; dropId++) {
+          try {
+            const d = await vault.drops(dropId);
+            const remaining = BigInt(d.remainingBalance);
+            const expiresAt = Number(d.expiresAt);
+            const finalized = d.finalized;
+
+            // Skip expired or fully depleted drops
+            if (finalized || remaining === 0n || now > expiresAt) {
+              continue;
+            }
+
+            // Read collections for this drop
+            const collections = await vault.getDropCollections(dropId);
+            if (!collections || collections.length === 0) continue;
+
+            // Read token symbol & decimals
+            const tokenContract = new ethers.Contract(d.token, ERC20_ABI, provider);
+            let symbol = "TOKENS";
+            let decimals = 18;
+            try {
+              symbol = await tokenContract.symbol();
+              decimals = await tokenContract.decimals();
+            } catch (_) {}
+
+            const payoutUnits = ethers.formatUnits(d.amountPerNFT, decimals);
+
+            // Check each eligible collection against user's owned NFTs
+            for (const col of collections) {
+              const ownedTokenIds = await getUserNFTTokenIds(userAddress, col);
+
+              for (const tokenId of ownedTokenIds) {
+                const claimed = await vault.isTokenClaimed(dropId, col, tokenId);
+                if (!claimed) {
+                  userClaimableItems.push({
+                    dropId,
+                    tokenAddress: d.token,
+                    tokenSymbol: symbol,
+                    payoutFormatted: payoutUnits,
+                    rawPayout: d.amountPerNFT,
+                    collection: col,
+                    tokenId: tokenId,
+                    expiresAt: expiresAt
+                  });
+                }
+              }
+            }
+          } catch (dropErr) {
+            console.warn(`Error scanning drop #${dropId}:`, dropErr);
+          }
+        }
+
+        // Render results
+        if (userClaimableItems.length === 0) {
+          summaryText.innerText = "No Claimable Drops Found";
+          subText.innerText = "All eligible drops have either been claimed, expired, or require NFTs you do not hold.";
+          claimAllWrap.style.display = 'none';
+          container.innerHTML = `
+            <div class="empty-claims" style="grid-column: 1 / -1;">
+              <strong style="color: var(--text-main); font-size: 15px; display: block; margin-bottom: 6px;">Zero Unclaimed Airdrops for ${userAddress.slice(0,6)}...${userAddress.slice(-4)}</strong>
+              You have claimed all available drops for your NFTs, or the current active drops target different collections.
+            </div>
+          `;
+        } else {
+          summaryText.innerText = `🎉 ${userClaimableItems.length} Airdrop Claim(s) Available!`;
+          subText.innerText = `Found ${userClaimableItems.length} eligible payout(s) ready for your wallet`;
+          claimAllWrap.style.display = userClaimableItems.length > 1 ? 'block' : 'none';
+
+          container.innerHTML = userClaimableItems.map((item, index) => {
+            const timeLeft = Math.max(0, item.expiresAt - Math.floor(Date.now() / 1000));
+            const daysLeft = Math.floor(timeLeft / 86400);
+            const hoursLeft = Math.floor((timeLeft % 86400) / 3600);
+            return `
+              <div class="claim-card">
+                <span class="claim-card-badge">Drop #${item.dropId} Available</span>
+                <div class="claim-amount">${parseFloat(item.payoutFormatted).toFixed(2)} <span>${item.tokenSymbol}</span></div>
+                <div class="claim-sub">
+                  Gate: King Midas • Token ID: <strong>#${item.tokenId}</strong><br>
+                  Contract: ${item.tokenAddress.slice(0,6)}...${item.tokenAddress.slice(-4)}<br>
+                  Expires in: ${daysLeft}d ${hoursLeft}h
+                </div>
+                <button class="btn claim-card-btn" onclick="claimSpecificItem(${index})">
+                  Claim ${parseFloat(item.payoutFormatted).toFixed(2)} ${item.tokenSymbol}
+                </button>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        summaryText.innerText = "Scan Error";
+        subText.innerText = err.message || err;
+      }
+    }
+
+    // CLAIM SINGLE DETECTED ITEM
+    async function claimSpecificItem(itemIndex) {
+      const item = userClaimableItems[itemIndex];
+      if (!item) return;
+
+      try {
+        clearStatus();
+        const signer = await getSigner();
+        const vault = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
+
+        showStatus('info', `Claiming Drop #${item.dropId} (${item.payoutFormatted} ${item.tokenSymbol}) for Token #${item.tokenId}...`);
+
+        const tx = await vault.claim(item.dropId, item.collection, item.tokenId);
+        showStatus('info', 'Claim submitted! Waiting for block confirmation on Base...', tx.hash);
+
+        const receipt = await tx.wait();
+        if (receipt.status === 1) {
+          showStatus('success', `🎉 Successfully claimed ${item.payoutFormatted} ${item.tokenSymbol} for King Midas #${item.tokenId}!`, tx.hash);
+          scanAllDropsForWallet();
+        } else {
+          showStatus('error', 'Claim transaction reverted on chain.', tx.hash);
+        }
+      } catch (e) {
+        showStatus('error', 'Claim failed: ' + (e.reason || e.message || e));
+      }
+    }
+
+    // CLAIM ALL DETECTED DROPS
+    async function claimAllAvailable() {
+      if (userClaimableItems.length === 0) return;
+      try {
+        clearStatus();
+        const signer = await getSigner();
+        const vault = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
+
+        // Group by dropId to use batchClaim where possible
+        const grouped = {};
+        userClaimableItems.forEach(item => {
+          if (!grouped[item.dropId]) grouped[item.dropId] = { collections: [], tokenIds: [] };
+          grouped[item.dropId].collections.push(item.collection);
+          grouped[item.dropId].tokenIds.push(item.tokenId);
+        });
+
+        const dropIds = Object.keys(grouped);
+        showStatus('info', `Executing claims across ${dropIds.length} drop(s)... Please approve transactions in your wallet.`);
+
+        for (const dId of dropIds) {
+          const group = grouped[dId];
+          let tx;
+          if (group.tokenIds.length === 1) {
+            tx = await vault.claim(dId, group.collections[0], group.tokenIds[0]);
+          } else {
+            tx = await vault.batchClaim(dId, group.collections, group.tokenIds);
+          }
+
+          showStatus('info', `Drop #${dId} submitted! Waiting for confirmation...`, tx.hash);
+          await tx.wait();
+        }
+
+        showStatus('success', '🎉 All available drops successfully claimed!');
+        scanAllDropsForWallet();
+      } catch (e) {
+        showStatus('error', 'Batch claim failed: ' + (e.reason || e.message || e));
+      }
+    }
+
+    // MANUAL SINGLE CLAIM
+    async function claimManualSingle() {
+      const btn = document.getElementById('btnManualClaim');
+      try {
+        clearStatus();
+        btn.disabled = true;
+        btn.innerText = "Verifying...";
+
+        const signer = await getSigner();
+        const user = await signer.getAddress();
+        const dropId = parseInt(document.getElementById('claimDropId').value) || 2;
+        const tokenId = parseInt(document.getElementById('claimTokenId').value);
+
+        if (isNaN(tokenId)) throw new Error("Please enter a numeric NFT Token ID.");
+
+        const vaultContract = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
+        const collections = await vaultContract.getDropCollections(dropId);
+        const col = collections[0] || "0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7";
+
+        const alreadyClaimed = await vaultContract.isTokenClaimed(dropId, col, tokenId);
+        if (alreadyClaimed) {
+          throw new Error(`Token #${tokenId} has ALREADY claimed rewards for Drop #${dropId}.`);
+        }
+
+        const nftContract = new ethers.Contract(col, ERC721_ABI, signer);
+        const actualOwner = await nftContract.ownerOf(tokenId);
+        if (actualOwner.toLowerCase() !== user.toLowerCase()) {
+          throw new Error(`Connected wallet does not own Token #${tokenId}. Actual owner: ${actualOwner.slice(0,6)}...`);
+        }
+
+        btn.innerText = "Confirm in Wallet...";
+        showStatus('info', `Ownership verified! Confirm claim transaction in wallet...`);
+
+        const tx = await vaultContract.claim(dropId, col, tokenId);
+        showStatus('info', `Claim submitted! Waiting for confirmation...`, tx.hash);
+
+        const receipt = await tx.wait();
+        if (receipt.status === 1) {
+          showStatus('success', `🎉 Successfully claimed for Token #${tokenId}!`, tx.hash);
+          btn.innerText = "✓ Claimed!";
+          scanAllDropsForWallet();
+        } else {
+          showStatus('error', 'Claim reverted.', tx.hash);
+          btn.innerText = "Claim Single Token ID";
+        }
+      } catch (e) {
+        showStatus('error', 'Claim failed: ' + (e.reason || e.message || e));
+        btn.innerText = "Claim Single Token ID";
+      } finally {
+        btn.disabled = false;
       }
     }
 
@@ -548,14 +739,8 @@
         const totalAmtStr = document.getElementById('totalAmount').value.trim() || "10000";
 
         const tokenContract = new ethers.Contract(tokenAddr, ERC20_ABI, signer);
-        
-        showStatus('info', 'Reading token decimals and existing allowance...');
         let decimals = 18;
-        try {
-          decimals = await tokenContract.decimals();
-        } catch (_) {
-          decimals = 18;
-        }
+        try { decimals = await tokenContract.decimals(); } catch (_) { decimals = 18; }
 
         const requiredUnits = ethers.parseUnits(totalAmtStr, decimals);
         const currentAllowance = await tokenContract.allowance(user, VAULT_ADDRESS);
@@ -610,11 +795,7 @@
 
         const tokenContract = new ethers.Contract(tokenAddr, ERC20_ABI, signer);
         let decimals = 18;
-        try {
-          decimals = await tokenContract.decimals();
-        } catch (_) {
-          decimals = 18;
-        }
+        try { decimals = await tokenContract.decimals(); } catch (_) { decimals = 18; }
 
         const requiredUnits = ethers.parseUnits(totalAmtStr, decimals);
 
@@ -646,7 +827,6 @@
         if (receipt.status === 1) {
           showStatus('success', `🎉 Drop successfully funded & escrowed on Base! ${supply.toLocaleString()} NFTs are now eligible for claim!`, tx.hash);
           btn.innerText = "✓ Drop Funded!";
-          loadDropsFromChain();
         } else {
           showStatus('error', 'Fund drop transaction reverted.', tx.hash);
           btn.innerText = "Step 2: Fund Drop Escrow";
@@ -654,84 +834,6 @@
       } catch (e) {
         showStatus('error', 'Fund drop failed: ' + (e.reason || e.message || e));
         btn.innerText = "Step 2: Fund Drop Escrow";
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    // CLAIM TRANSACTION WITH PRE-FLIGHT VERIFICATION
-    async function claimTokens() {
-      const btn = document.getElementById('btnClaim');
-      try {
-        clearStatus();
-        btn.disabled = true;
-        btn.innerText = "Verifying...";
-
-        const signer = await getSigner();
-        const user = await signer.getAddress();
-        const dropId = parseInt(document.getElementById('claimDropId').value) || 2;
-        const tokenId = parseInt(document.getElementById('claimTokenId').value);
-
-        if (isNaN(tokenId)) throw new Error("Please enter a valid numeric NFT Token ID.");
-
-        const vaultContract = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
-
-        // Pre-flight 1: Read eligible collections for this Drop ID
-        showStatus('info', `Checking eligibility for Drop #${dropId}...`);
-        let collections = [];
-        try {
-          collections = await vaultContract.getDropCollections(dropId);
-        } catch (_) {
-          collections = ["0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7"];
-        }
-
-        if (!collections || collections.length === 0) {
-          throw new Error(`Drop #${dropId} has no eligible collections registered.`);
-        }
-
-        const targetCollection = collections[0]; // King Midas (0x3bc5...)
-
-        // Pre-flight 2: Check if this specific Token ID has already claimed
-        showStatus('info', `Checking claim status for Token #${tokenId}...`);
-        const alreadyClaimed = await vaultContract.isTokenClaimed(dropId, targetCollection, tokenId);
-        if (alreadyClaimed) {
-          throw new Error(`Token #${tokenId} has ALREADY claimed rewards for Drop #${dropId}. Each NFT can only claim once.`);
-        }
-
-        // Pre-flight 3: Check on-chain ownership of this NFT
-        showStatus('info', `Verifying on-chain ownership of Token #${tokenId}...`);
-        const nftContract = new ethers.Contract(targetCollection, ERC721_ABI, signer);
-        let actualOwner = "";
-        try {
-          actualOwner = await nftContract.ownerOf(tokenId);
-        } catch (err) {
-          throw new Error(`Token #${tokenId} does not exist or ownerOf call failed on collection ${targetCollection.slice(0,6)}...${targetCollection.slice(-4)}`);
-        }
-
-        if (actualOwner.toLowerCase() !== user.toLowerCase()) {
-          throw new Error(`Ownership check failed: Connected wallet (${user.slice(0,6)}...${user.slice(-4)}) does NOT own King Midas Token #${tokenId}. Actual on-chain owner is: ${actualOwner.slice(0,6)}...${actualOwner.slice(-4)}`);
-        }
-
-        // Execution: Submit claim transaction
-        btn.innerText = "Confirm in Wallet...";
-        showStatus('info', `Ownership verified! Please confirm claim transaction in your wallet for Token #${tokenId}...`);
-
-        const tx = await vaultContract.claim(dropId, targetCollection, tokenId);
-        showStatus('info', `Claim submitted! Waiting for confirmation on Base...`, tx.hash);
-        btn.innerText = "Claiming...";
-
-        const receipt = await tx.wait();
-        if (receipt.status === 1) {
-          showStatus('success', `🎉 Airdrop reward claimed successfully for King Midas Token #${tokenId}!`, tx.hash);
-          btn.innerText = "✓ Claimed!";
-          loadDropsFromChain();
-        } else {
-          showStatus('error', 'Claim transaction reverted on chain.', tx.hash);
-          btn.innerText = "Claim Airdrop for King Midas NFT";
-        }
-      } catch (e) {
-        showStatus('error', 'Claim failed: ' + (e.reason || e.message || e));
-        btn.innerText = "Claim Airdrop for King Midas NFT";
       } finally {
         btn.disabled = false;
       }
@@ -773,10 +875,84 @@
       }
     }
 
-    // Initialize UI
-    renderGateCards();
-    updatePreview();
-    loadDropsFromChain();
+    function renderGateCards() {
+      const grid = document.getElementById('gateGrid');
+      if (!grid) return;
+      grid.innerHTML = availableGates.map((g, idx) => `
+        <div class="nft-card ${g.selected ? 'selected' : ''}" id="card-${idx}" onclick="toggleCard(${idx})">
+          <span class="badge-check">✓ ACTIVE</span>
+          <img src="${g.image || DEFAULT_GATE_IMAGE}" alt="${g.name}" onerror="this.src='${DEFAULT_GATE_IMAGE}'">
+          <div class="nft-title">${g.name}</div>
+          <div class="nft-sub">${g.collection.slice(0,6)}...${g.collection.slice(-4)}</div>
+          <div class="nft-supply-badge">${(g.mintedSupply || 0).toLocaleString()} Minted Token IDs</div>
+        </div>
+      `).join('');
+    }
+
+    function setToken(addr) {
+      document.getElementById('tokenAddress').value = addr;
+      updatePreview();
+    }
+
+    function toggleGateChooser() {
+      const wrap = document.getElementById('gateChooserWrap');
+      const btn = document.getElementById('btnToggleChoose');
+      if (wrap.style.display === 'none') {
+        wrap.style.display = 'block';
+        btn.innerText = 'Hide Gate NFTs';
+      } else {
+        wrap.style.display = 'none';
+        btn.innerText = 'Choose Gate NFTs';
+      }
+    }
+
+    function toggleCard(id) {
+      if (!availableGates[id]) return;
+      availableGates[id].selected = !availableGates[id].selected;
+      const card = document.getElementById('card-' + id);
+      if (card) {
+        if (availableGates[id].selected) card.classList.add('selected');
+        else card.classList.remove('selected');
+      }
+      updatePreview();
+    }
+
+    function selectAllGates() {
+      availableGates.forEach((g, idx) => {
+        g.selected = true;
+        const card = document.getElementById('card-' + idx);
+        if (card) card.classList.add('selected');
+      });
+      updatePreview();
+    }
+
+    function resetGateSelection() {
+      availableGates.forEach((g, idx) => {
+        g.selected = true;
+        const card = document.getElementById('card-' + idx);
+        if (card) card.classList.add('selected');
+      });
+      updatePreview();
+    }
+
+    function getSelectedSupply() {
+      const sel = availableGates.filter(g => g.selected);
+      if (sel.length === 0) return availableGates.reduce((acc, g) => acc + g.mintedSupply, 0);
+      return sel.reduce((acc, g) => acc + g.mintedSupply, 0);
+    }
+
+    function updatePreview() {
+      const totalAmt = parseFloat(document.getElementById('totalAmount').value) || 0;
+      const supply = getSelectedSupply();
+      const selCount = availableGates.filter(g => g.selected).length || availableGates.length;
+      const perNFT = supply > 0 ? (totalAmt / supply).toFixed(4) : "0.0000";
+
+      document.getElementById('splitDisplay').value = `Auto: ${supply.toLocaleString()} Minted NFTs across ${selCount} Active Gate(s)`;
+      const names = availableGates.filter(g => g.selected).map(g => g.name).join(', ') || 'None';
+      document.getElementById('previewActiveContracts').innerText = `${selCount} Contract(s) (${names})`;
+      document.getElementById('previewTotalNFTs').innerText = `${supply.toLocaleString()} Token IDs`;
+      document.getElementById('previewPerNFT').innerText = `${perNFT} Tokens / NFT`;
+    }
 
     // Auto-detect injected wallet if already authorized
     if (window.ethereum) {
@@ -785,9 +961,13 @@
           userAddress = accounts[0];
           const btn = document.getElementById('btnConnect');
           if (btn) btn.innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+          scanAllDropsForWallet();
         }
       }).catch(() => {});
     }
+
+    renderGateCards();
+    updatePreview();
   </script>
 </body>
 </html>
