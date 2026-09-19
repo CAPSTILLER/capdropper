@@ -125,7 +125,7 @@
             <label style="margin-bottom: 0;">Automated Gate NFT Split Count</label>
             <button id="btnToggleChoose" class="btn btn-secondary btn-small" onclick="toggleGateChooser()">Choose Gate NFTs</button>
           </div>
-          <input type="text" id="splitDisplay" class="form-control" readonly value="Auto: 138 Minted NFTs across 1 Active Gate">
+          <input type="text" id="splitDisplay" class="form-control" readonly value="Auto: 8,888 Minted NFTs across 1 Active Gate">
         </div>
       </div>
 
@@ -144,10 +144,10 @@
         <div id="gateGrid" class="gate-grid">
           <div class="nft-card selected" id="card-0" onclick="toggleCard(0)">
             <span class="badge-check">✓ ACTIVE</span>
-            <img src="https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F542ec31c-a924-4c24-ab7f-56339a679000%2Fpublic" alt="Letters to CAP">
-            <div class="nft-title">Letters to CAP</div>
-            <div class="nft-sub">0x23D9...a661</div>
-            <div class="nft-supply-badge">138 Minted Token IDs</div>
+            <img src="https://i2c.seadn.io/base/0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7/a8981d374a51b95e78d50110096abd/33a8981d374a51b95e78d50110096abd.jpeg" alt="King Midas">
+            <div class="nft-title">King Midas</div>
+            <div class="nft-sub">0x3bC5...e8B7</div>
+            <div class="nft-supply-badge">8,888 Minted Token IDs</div>
           </div>
         </div>
       </div>
@@ -175,15 +175,15 @@
         </div>
         <div class="preview-stat">
           <span>Active Gate Contracts Counted:</span>
-          <span id="previewActiveContracts" style="color: var(--gold-bright);">1 Contract (Letters to CAP)</span>
+          <span id="previewActiveContracts" style="color: var(--gold-bright);">1 Contract (King Midas)</span>
         </div>
         <div class="preview-stat">
           <span>Total Minted Token IDs for Split:</span>
-          <strong id="previewTotalNFTs" style="color: var(--gold-bright);">138 Token IDs</strong>
+          <strong id="previewTotalNFTs" style="color: var(--gold-bright);">8,888 Token IDs</strong>
         </div>
         <div class="preview-stat">
           <span>Even Payout Per NFT:</span>
-          <strong id="previewPerNFT" style="color: var(--gold-bright); font-size: 15px;">72.4637 Tokens / NFT</strong>
+          <strong id="previewPerNFT" style="color: var(--gold-bright); font-size: 15px;">1.1251 Tokens / NFT</strong>
         </div>
         <div class="preview-stat">
           <span>Expiration Settlement:</span>
@@ -210,7 +210,7 @@
             Token: <strong>$BNKR</strong> (0x22af...6f3b)
           </div>
           <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
-            Collection: <strong>Letters to CAP</strong> (0x23D9...a661)
+            Collection: <strong>King Midas</strong> (0x3bC5...e8B7)
           </div>
           <div class="form-group">
             <label>NFT Token ID Owned</label>
@@ -239,15 +239,37 @@
 
   <script>
     let userAddress = null;
+    const DEFAULT_GATE_IMAGE = "https://i2c.seadn.io/base/0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7/a8981d374a51b95e78d50110096abd/33a8981d374a51b95e78d50110096abd.jpeg";
     let availableGates = [
-      { id: 0, name: "Letters to CAP", collection: "0x23D9c8259A672b9F32Ba862cA6ed6B860575a661", mintedSupply: 138, selected: true }
+      {
+        id: 0,
+        name: "King Midas",
+        collection: "0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7",
+        mintedSupply: 8888,
+        selected: true,
+        image: DEFAULT_GATE_IMAGE
+      }
     ];
+
+    function renderGateCards() {
+      const grid = document.getElementById('gateGrid');
+      if (!grid) return;
+      grid.innerHTML = availableGates.map((g, idx) => `
+        <div class="nft-card ${g.selected ? 'selected' : ''}" id="card-${idx}" onclick="toggleCard(${idx})">
+          <span class="badge-check">✓ ACTIVE</span>
+          <img src="${g.image || DEFAULT_GATE_IMAGE}" alt="${g.name}" onerror="this.src='${DEFAULT_GATE_IMAGE}'">
+          <div class="nft-title">${g.name}</div>
+          <div class="nft-sub">${g.collection.slice(0,6)}...${g.collection.slice(-4)}</div>
+          <div class="nft-supply-badge">${(g.mintedSupply || 0).toLocaleString()} Minted Token IDs</div>
+        </div>
+      `).join('');
+    }
 
     function switchTab(tabId) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.getElementById('panel-' + tabId).classList.add('active');
-      event.target.classList.add('active');
+      if (event && event.target) event.target.classList.add('active');
     }
 
     function setToken(addr) {
@@ -268,6 +290,7 @@
     }
 
     function toggleCard(id) {
+      if (!availableGates[id]) return;
       availableGates[id].selected = !availableGates[id].selected;
       const card = document.getElementById('card-' + id);
       if (card) {
@@ -313,9 +336,10 @@
 
       const perNFT = supply > 0 ? (totalAmt / supply).toFixed(4) : "0.0000";
 
-      document.getElementById('splitDisplay').value = `Auto: ${supply} Minted NFTs across ${selCount} Active Gate(s)`;
-      document.getElementById('previewActiveContracts').innerText = `${selCount} Contract(s)`;
-      document.getElementById('previewTotalNFTs').innerText = `${supply} Token IDs`;
+      document.getElementById('splitDisplay').value = `Auto: ${supply.toLocaleString()} Minted NFTs across ${selCount} Active Gate(s)`;
+      const names = availableGates.filter(g => g.selected).map(g => g.name).join(', ') || 'None';
+      document.getElementById('previewActiveContracts').innerText = `${selCount} Contract(s) (${names})`;
+      document.getElementById('previewTotalNFTs').innerText = `${supply.toLocaleString()} Token IDs`;
       document.getElementById('previewPerNFT').innerText = `${perNFT} Tokens / NFT`;
     }
 
@@ -340,7 +364,7 @@
     function fundDrop() {
       const supply = getSelectedSupply();
       const totalAmt = document.getElementById('totalAmount').value || "10000";
-      alert(`Funding drop with ${totalAmt} tokens evenly split across ${supply} token IDs.`);
+      alert(`Funding drop with ${totalAmt} tokens evenly split across ${supply.toLocaleString()} token IDs.`);
     }
 
     function claimTokens() {
@@ -353,7 +377,8 @@
       alert(`Finalizing expired Drop #${id}...`);
     }
 
-    // Initialize preview on load
+    // Initialize preview and render cards
+    renderGateCards();
     updatePreview();
   </script>
 </body>
