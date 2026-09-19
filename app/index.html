@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CAPdropper Terminal — Midas Gate Airdrop Portal</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <style>
     :root {
       --bg: #090a0f;
@@ -29,14 +30,22 @@
     .wallet-status { display: flex; align-items: center; gap: 12px; }
     .btn { background: linear-gradient(135deg, #d97706, #f59e0b); color: #000; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s ease; font-size: 13px; }
     .btn:hover { box-shadow: 0 0 15px var(--gold-glow); transform: translateY(-1px); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn-secondary { background: #1f2937; color: var(--text-main); border: 1px solid #374151; }
     .btn-secondary:hover { background: #374151; box-shadow: none; }
     .btn-small { padding: 6px 12px; font-size: 12px; }
 
-    .gate-banner { background: rgba(26, 20, 8, 0.7); border: 1px solid #78350f; border-radius: 12px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
+    .gate-banner { background: rgba(26, 20, 8, 0.7); border: 1px solid #78350f; border-radius: 12px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
     .gate-indicator { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 13px; }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
     .status-dot.locked { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
+
+    /* Transaction Banner */
+    .tx-banner { margin-bottom: 20px; padding: 14px 18px; border-radius: 10px; font-size: 13px; font-family: var(--font-mono); line-height: 1.5; word-break: break-all; }
+    .tx-banner.info { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--gold-primary); color: var(--gold-bright); }
+    .tx-banner.success { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--accent-green); color: #6ee7b7; }
+    .tx-banner.error { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--accent-red); color: #fca5a5; }
+    .tx-banner a { color: var(--gold-bright); text-decoration: underline; font-weight: 700; }
 
     .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
     .tab-btn { background: rgba(255, 255, 255, 0.05); border: 1px solid #2d3748; color: var(--text-muted); padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s; }
@@ -94,6 +103,9 @@
         Registry: 0x54C3C8C9E2180c6b90652983d1c15cF933f1a263
       </div>
     </div>
+
+    <!-- LIVE STATUS BANNER -->
+    <div id="txBanner" class="tx-banner" style="display: none;"></div>
 
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('create')">1. Create & Fund Drop</button>
@@ -192,8 +204,8 @@
       </div>
 
       <div style="display: flex; gap: 12px;">
-        <button class="btn btn-secondary" onclick="approveToken()">Step 1: Approve Token</button>
-        <button class="btn" onclick="fundDrop()">Step 2: Fund Drop Escrow</button>
+        <button id="btnApprove" class="btn btn-secondary" onclick="approveToken()">Step 1: Approve Token</button>
+        <button id="btnFund" class="btn" onclick="fundDrop()">Step 2: Fund Drop Escrow</button>
       </div>
     </div>
 
@@ -216,7 +228,7 @@
             <label>NFT Token ID Owned</label>
             <input type="number" id="claimTokenId" class="form-control" placeholder="e.g. 4" value="4">
           </div>
-          <button class="btn" style="width: 100%;" onclick="claimTokens()">Claim Airdrop for NFT</button>
+          <button id="btnClaim" class="btn" style="width: 100%;" onclick="claimTokens()">Claim Airdrop for NFT</button>
         </div>
       </div>
     </div>
@@ -231,15 +243,38 @@
         <label>Drop ID to Finalize</label>
         <div style="display: flex; gap: 10px;">
           <input type="number" id="finalizeDropId" class="form-control" placeholder="1" value="1" style="max-width: 140px;">
-          <button class="btn btn-secondary" onclick="finalizeDrop()">Finalize Pool (90/10 Split)</button>
+          <button id="btnFinalize" class="btn btn-secondary" onclick="finalizeDrop()">Finalize Pool (90/10 Split)</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    let userAddress = null;
+    const VAULT_ADDRESS = "0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7";
+    const REGISTRY_ADDRESS = "0x54C3C8C9E2180c6b90652983d1c15cF933f1a263";
+    const TREASURY_ADDRESS = "0xA12506f742F4AB0980a57264871DB56A1A150793";
+    const BASE_CHAIN_ID_HEX = "0x2105"; // 8453
     const DEFAULT_GATE_IMAGE = "https://i2c.seadn.io/base/0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7/a8981d374a51b95e78d50110096abd/33a8981d374a51b95e78d50110096abd.jpeg";
+
+    const ERC20_ABI = [
+      "function name() view returns (string)",
+      "function symbol() view returns (string)",
+      "function decimals() view returns (uint8)",
+      "function balanceOf(address) view returns (uint256)",
+      "function allowance(address owner, address spender) view returns (uint256)",
+      "function approve(address spender, uint256 amount) returns (bool)"
+    ];
+
+    const VAULT_ABI = [
+      "function fundDropWithMidasGate(address token, uint256 totalAmount, uint256 totalEligibleNFTs, uint256 durationSeconds, address treasury) returns (uint256)",
+      "function fundDropCustom(address token, uint256 totalAmount, address[] collections, uint256 totalEligibleNFTs, uint256 durationSeconds, address treasury) returns (uint256)",
+      "function claim(uint256 dropId, address collection, uint256 tokenId)",
+      "function finalizeDrop(uint256 dropId)",
+      "function drops(uint256) view returns (address creator, address token, uint256 totalAmount, uint256 remainingBalance, uint256 amountPerNFT, uint256 totalEligibleNFTs, uint256 claimedCount, uint256 createdAt, uint256 expiresAt, bool finalized, address treasury, address gateRegistry)",
+      "function dropCounter() view returns (uint256)"
+    ];
+
+    let userAddress = null;
     let availableGates = [
       {
         id: 0,
@@ -250,6 +285,78 @@
         image: DEFAULT_GATE_IMAGE
       }
     ];
+
+    function showStatus(type, msg, txHash = null) {
+      const b = document.getElementById('txBanner');
+      if (!b) return;
+      b.style.display = 'block';
+      b.className = 'tx-banner ' + type;
+      let html = msg;
+      if (txHash) {
+        html += `<br><a href="https://basescan.org/tx/${txHash}" target="_blank" rel="noopener noreferrer">View on Basescan ↗ (${txHash.slice(0,10)}...)</a>`;
+      }
+      b.innerHTML = html;
+      b.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearStatus() {
+      const b = document.getElementById('txBanner');
+      if (b) b.style.display = 'none';
+    }
+
+    async function ensureBaseNetwork() {
+      if (!window.ethereum) throw new Error("No EVM wallet detected. Open in MetaMask, Rabby, or Coinbase Wallet.");
+      const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+      if (currentChainId !== BASE_CHAIN_ID_HEX && parseInt(currentChainId, 16) !== 8453) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: BASE_CHAIN_ID_HEX }]
+          });
+        } catch (err) {
+          if (err.code === 4902) {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: BASE_CHAIN_ID_HEX,
+                chainName: 'Base Mainnet',
+                nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                rpcUrls: ['https://mainnet.base.org'],
+                blockExplorerUrls: ['https://basescan.org']
+              }]
+            });
+          } else {
+            throw err;
+          }
+        }
+      }
+    }
+
+    async function getSigner() {
+      if (!window.ethereum) {
+        throw new Error("No Web3 wallet found. Please install MetaMask, Coinbase Wallet, or Rabby.");
+      }
+      await ensureBaseNetwork();
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      if (!accounts || accounts.length === 0) throw new Error("Wallet not connected.");
+      userAddress = accounts[0];
+      const btn = document.getElementById('btnConnect');
+      if (btn) btn.innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+      return await provider.getSigner();
+    }
+
+    async function connectWallet() {
+      try {
+        clearStatus();
+        showStatus('info', 'Connecting wallet...');
+        const signer = await getSigner();
+        const addr = await signer.getAddress();
+        showStatus('success', `Connected: ${addr} on Base Mainnet`);
+      } catch (e) {
+        showStatus('error', 'Connection failed: ' + (e.reason || e.message || e));
+      }
+    }
 
     function renderGateCards() {
       const grid = document.getElementById('gateGrid');
@@ -343,43 +450,221 @@
       document.getElementById('previewPerNFT').innerText = `${perNFT} Tokens / NFT`;
     }
 
-    async function connectWallet() {
-      if (window.ethereum) {
+    // STEP 1: APPROVE TOKEN TRANSACTION
+    async function approveToken() {
+      const btn = document.getElementById('btnApprove');
+      try {
+        clearStatus();
+        btn.disabled = true;
+        btn.innerText = "Connecting...";
+
+        const signer = await getSigner();
+        const user = await signer.getAddress();
+        const tokenAddr = document.getElementById('tokenAddress').value.trim();
+        const totalAmtStr = document.getElementById('totalAmount').value.trim() || "10000";
+
+        const tokenContract = new ethers.Contract(tokenAddr, ERC20_ABI, signer);
+        
+        showStatus('info', 'Reading token decimals and existing allowance...');
+        let decimals = 18;
         try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          userAddress = accounts[0];
-          document.getElementById('btnConnect').innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-        } catch (e) {
-          alert("Wallet connection failed: " + e.message);
+          decimals = await tokenContract.decimals();
+        } catch (_) {
+          decimals = 18;
         }
-      } else {
-        alert("Connect inside Bankr terminal or with an injected EVM wallet.");
+
+        const requiredUnits = ethers.parseUnits(totalAmtStr, decimals);
+        const currentAllowance = await tokenContract.allowance(user, VAULT_ADDRESS);
+
+        if (currentAllowance >= requiredUnits) {
+          showStatus('success', `✓ Token is already approved for CAPdropper vault (${ethers.formatUnits(currentAllowance, decimals)} allowance). Ready for Step 2!`);
+          btn.innerText = "✓ Approved";
+          btn.disabled = false;
+          return;
+        }
+
+        btn.innerText = "Confirm in Wallet...";
+        showStatus('info', `Please confirm approval for ${totalAmtStr} tokens in your wallet...`);
+
+        // Approve required amount (or max)
+        const tx = await tokenContract.approve(VAULT_ADDRESS, requiredUnits);
+        showStatus('info', 'Approval submitted! Waiting for block confirmation on Base...', tx.hash);
+        btn.innerText = "Broadcasting...";
+
+        const receipt = await tx.wait();
+        if (receipt.status === 1) {
+          showStatus('success', '✓ Token approved successfully on Base! You can now tap Step 2: Fund Drop Escrow.', tx.hash);
+          btn.innerText = "✓ Token Approved";
+        } else {
+          showStatus('error', 'Approval reverted on chain.', tx.hash);
+          btn.innerText = "Step 1: Approve Token";
+        }
+      } catch (e) {
+        showStatus('error', 'Approval failed: ' + (e.reason || e.message || e));
+        btn.innerText = "Step 1: Approve Token";
+      } finally {
+        btn.disabled = false;
       }
     }
 
-    function approveToken() {
-      alert("Approve token for vault: 0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7");
+    // STEP 2: FUND DROP ESCROW TRANSACTION
+    async function fundDrop() {
+      const btn = document.getElementById('btnFund');
+      try {
+        clearStatus();
+        btn.disabled = true;
+        btn.innerText = "Connecting...";
+
+        const signer = await getSigner();
+        const user = await signer.getAddress();
+        const tokenAddr = document.getElementById('tokenAddress').value.trim();
+        const totalAmtStr = document.getElementById('totalAmount').value.trim() || "10000";
+        const durationSec = parseInt(document.getElementById('duration').value.trim()) || 604800;
+        const treasuryAddr = document.getElementById('treasury').value.trim() || TREASURY_ADDRESS;
+        const supply = getSelectedSupply();
+
+        if (supply === 0) throw new Error("Total eligible NFTs cannot be 0.");
+
+        const tokenContract = new ethers.Contract(tokenAddr, ERC20_ABI, signer);
+        let decimals = 18;
+        try {
+          decimals = await tokenContract.decimals();
+        } catch (_) {
+          decimals = 18;
+        }
+
+        const requiredUnits = ethers.parseUnits(totalAmtStr, decimals);
+
+        // Check allowance before triggering
+        const currentAllowance = await tokenContract.allowance(user, VAULT_ADDRESS);
+        if (currentAllowance < requiredUnits) {
+          throw new Error("Vault not approved for required token amount. Please tap 'Step 1: Approve Token' first.");
+        }
+
+        const vaultContract = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
+
+        btn.innerText = "Confirm in Wallet...";
+        showStatus('info', `Please confirm the Fund Drop escrow transaction for ${totalAmtStr} tokens across ${supply.toLocaleString()} NFTs in your wallet...`);
+
+        const selGates = availableGates.filter(g => g.selected);
+        let tx;
+        if (selGates.length === 1 && selGates[0].collection.toLowerCase() === "0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7") {
+          // Standard Midas Gate snapshot
+          tx = await vaultContract.fundDropWithMidasGate(tokenAddr, requiredUnits, supply, durationSec, treasuryAddr);
+        } else if (selGates.length > 0) {
+          const colAddrs = selGates.map(g => g.collection);
+          tx = await vaultContract.fundDropCustom(tokenAddr, requiredUnits, colAddrs, supply, durationSec, treasuryAddr);
+        } else {
+          tx = await vaultContract.fundDropWithMidasGate(tokenAddr, requiredUnits, supply, durationSec, treasuryAddr);
+        }
+
+        showStatus('info', 'Fund drop transaction broadcast! Waiting for confirmation on Base...', tx.hash);
+        btn.innerText = "Broadcasting...";
+
+        const receipt = await tx.wait();
+        if (receipt.status === 1) {
+          showStatus('success', `🎉 Drop successfully funded & escrowed on Base! ${supply.toLocaleString()} NFTs are now eligible for claim!`, tx.hash);
+          btn.innerText = "✓ Drop Funded!";
+        } else {
+          showStatus('error', 'Fund drop transaction reverted.', tx.hash);
+          btn.innerText = "Step 2: Fund Drop Escrow";
+        }
+      } catch (e) {
+        showStatus('error', 'Fund drop failed: ' + (e.reason || e.message || e));
+        btn.innerText = "Step 2: Fund Drop Escrow";
+      } finally {
+        btn.disabled = false;
+      }
     }
 
-    function fundDrop() {
-      const supply = getSelectedSupply();
-      const totalAmt = document.getElementById('totalAmount').value || "10000";
-      alert(`Funding drop with ${totalAmt} tokens evenly split across ${supply.toLocaleString()} token IDs.`);
+    // CLAIM TRANSACTION
+    async function claimTokens() {
+      const btn = document.getElementById('btnClaim');
+      try {
+        clearStatus();
+        btn.disabled = true;
+        btn.innerText = "Connecting...";
+
+        const signer = await getSigner();
+        const dropId = 1;
+        const tokenId = parseInt(document.getElementById('claimTokenId').value) || 0;
+        const collection = "0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7"; // King Midas
+
+        btn.innerText = "Confirm in Wallet...";
+        showStatus('info', `Confirm claim for Drop #${dropId}, King Midas Token #${tokenId} in your wallet...`);
+
+        const vaultContract = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
+        const tx = await vaultContract.claim(dropId, collection, tokenId);
+
+        showStatus('info', 'Claim submitted! Waiting for confirmation on Base...', tx.hash);
+        btn.innerText = "Claiming...";
+
+        const receipt = await tx.wait();
+        if (receipt.status === 1) {
+          showStatus('success', `🎉 Airdrop reward claimed successfully for Token #${tokenId}!`, tx.hash);
+          btn.innerText = "✓ Claimed!";
+        } else {
+          showStatus('error', 'Claim transaction reverted.', tx.hash);
+          btn.innerText = "Claim Airdrop for NFT";
+        }
+      } catch (e) {
+        showStatus('error', 'Claim failed: ' + (e.reason || e.message || e));
+        btn.innerText = "Claim Airdrop for NFT";
+      } finally {
+        btn.disabled = false;
+      }
     }
 
-    function claimTokens() {
-      const tid = document.getElementById('claimTokenId').value;
-      alert(`Claiming drop 1 for Token ID #${tid}...`);
+    // FINALIZE EXPIRED DROP TRANSACTION
+    async function finalizeDrop() {
+      const btn = document.getElementById('btnFinalize');
+      try {
+        clearStatus();
+        btn.disabled = true;
+        btn.innerText = "Connecting...";
+
+        const signer = await getSigner();
+        const dropId = parseInt(document.getElementById('finalizeDropId').value) || 1;
+
+        btn.innerText = "Confirm in Wallet...";
+        showStatus('info', `Confirm finalization for Drop #${dropId} in your wallet...`);
+
+        const vaultContract = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
+        const tx = await vaultContract.finalizeDrop(dropId);
+
+        showStatus('info', 'Finalization submitted! Waiting for confirmation...', tx.hash);
+        btn.innerText = "Finalizing...";
+
+        const receipt = await tx.wait();
+        if (receipt.status === 1) {
+          showStatus('success', `✓ Drop #${dropId} finalized! 90% refund and 10% protocol fee have been credited to pending balances.`, tx.hash);
+          btn.innerText = "✓ Finalized";
+        } else {
+          showStatus('error', 'Finalization reverted.', tx.hash);
+          btn.innerText = "Finalize Pool (90/10 Split)";
+        }
+      } catch (e) {
+        showStatus('error', 'Finalization failed: ' + (e.reason || e.message || e));
+        btn.innerText = "Finalize Pool (90/10 Split)";
+      } finally {
+        btn.disabled = false;
+      }
     }
 
-    function finalizeDrop() {
-      const id = document.getElementById('finalizeDropId').value;
-      alert(`Finalizing expired Drop #${id}...`);
-    }
-
-    // Initialize preview and render cards
+    // Initialize UI
     renderGateCards();
     updatePreview();
+
+    // Auto-detect injected wallet if already authorized
+    if (window.ethereum) {
+      window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
+        if (accounts && accounts.length > 0) {
+          userAddress = accounts[0];
+          const btn = document.getElementById('btnConnect');
+          if (btn) btn.innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+        }
+      }).catch(() => {});
+    }
   </script>
 </body>
 </html>
