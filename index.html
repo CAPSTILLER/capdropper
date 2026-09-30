@@ -276,12 +276,32 @@
     <div id="panel-settle" class="panel">
       <h3 style="margin-bottom: 16px; color: var(--gold-bright);">Expired Drops & Protocol Settlements</h3>
       <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">
-        When a drop expires, 90% of unclaimed tokens refund to the creator and 10% route to protocol treasury (0xA125...793).
+        When a drop expires, anyone can <strong>finalize</strong> it: the unclaimed tokens are split 90% to the drop creator and 10% to the protocol treasury (0xA125...793).
+        Finalizing does <strong>not</strong> send tokens to your wallet. It only credits them to a <em>pending balance</em> in the vault, and each party must then <strong>withdraw</strong> their own pending balance in a second transaction.
       </p>
+
+      <!-- CREATOR RECLAIM PANEL -->
+      <div style="background: #0c0e18; border: 1px solid #3b3524; border-radius: 12px; padding: 18px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+          <strong style="color: var(--gold-bright); font-size: 15px;">Creator Reclaim (your drops)</strong>
+          <button id="btnRescanCreator" class="btn btn-secondary btn-small" onclick="scanCreatorDrops()">Re-Scan My Drops</button>
+        </div>
+        <div id="creatorScanSummary" class="claim-sub">Connect your wallet to list drops you created.</div>
+        <div id="creatorDropsList" style="overflow-x: auto;"></div>
+        <div id="creatorPendingList" style="margin-top: 14px;"></div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px;">
+          <button id="btnReclaimAll" class="btn btn-success" onclick="reclaimAll()" disabled>Reclaim all unclaimed (finalize + withdraw)</button>
+          <button id="btnWithdrawPending" class="btn btn-secondary" onclick="withdrawPendingAll()" disabled>Withdraw pending</button>
+        </div>
+        <div class="claim-sub" style="margin-top: 10px;">
+          Runs one transaction at a time and waits for each to confirm (smart-account wallets may ask you to confirm each one). Safe to re-run: steps that are already done are skipped.
+        </div>
+      </div>
+
       <div class="form-group">
-        <label>Drop ID to Finalize</label>
+        <label>Finalize a single drop (anyone can call this after expiry)</label>
         <div style="display: flex; gap: 10px;">
-          <input type="number" id="finalizeDropId" class="form-control" placeholder="2" value="2" style="max-width: 140px;">
+          <input type="number" id="finalizeDropId" class="form-control" placeholder="Drop ID" min="1" style="max-width: 140px;">
           <button id="btnFinalize" class="btn btn-secondary" onclick="finalizeDrop()">Finalize Pool (90/10 Split)</button>
         </div>
       </div>
@@ -316,6 +336,8 @@
       "function claim(uint256 dropId, address collection, uint256 tokenId)",
       "function batchClaim(uint256 dropId, address[] calldata collections, uint256[] calldata tokenIds)",
       "function finalizeDrop(uint256 dropId)",
+      "function withdrawPending(address token)",
+      "function pendingBalances(address user, address token) view returns (uint256)",
       "function drops(uint256) view returns (address creator, address token, uint256 totalAmount, uint256 remainingBalance, uint256 amountPerNFT, uint256 totalEligibleNFTs, uint256 claimedCount, uint256 createdAt, uint256 expiresAt, bool finalized, address treasury, address gateRegistry)",
       "function getDropCollections(uint256 dropId) view returns (address[] memory)",
       "function isDropCollection(uint256 dropId, address collection) view returns (bool)",
@@ -417,6 +439,10 @@
       if (event && event.target) event.target.classList.add('active');
       if (tabId === 'claim') {
         scanAllDropsForWallet();
+      }
+      if (tabId === 'settle') {
+        prefillFinalizeInput();
+        scanCreatorDrops();
       }
     }
 
@@ -848,7 +874,8 @@
         btn.innerText = "Connecting...";
 
         const signer = await getSigner();
-        const dropId = parseInt(document.getElementById('finalizeDropId').value) || 2;
+        const dropId = parseInt(document.getElementById('finalizeDropId').value);
+        if (!dropId || dropId < 1) throw new Error("Enter the Drop ID to finalize.");
 
         btn.innerText = "Confirm in Wallet...";
         showStatus('info', `Confirm finalization for Drop #${dropId} in your wallet...`);
@@ -861,8 +888,9 @@
 
         const receipt = await tx.wait();
         if (receipt.status === 1) {
-          showStatus('success', `✓ Drop #${dropId} finalized! 90% refund and 10% protocol fee have been credited to pending balances.`, tx.hash);
+          showStatus('success', `✓ Drop #${dropId} finalized. The 90% creator refund and 10% protocol fee are now in pending balances in the vault. They are NOT in a wallet yet: the creator must click Withdraw pending (or Reclaim all) above to receive them.`, tx.hash);
           btn.innerText = "✓ Finalized";
+          scanCreatorDrops();
         } else {
           showStatus('error', 'Finalization reverted.', tx.hash);
           btn.innerText = "Finalize Pool (90/10 Split)";
@@ -952,6 +980,252 @@
       document.getElementById('previewActiveContracts').innerText = `${selCount} Contract(s) (${names})`;
       document.getElementById('previewTotalNFTs').innerText = `${supply.toLocaleString()} Token IDs`;
       document.getElementById('previewPerNFT').innerText = `${perNFT} Tokens / NFT`;
+    }
+
+
+    // =========================================================
+    // CREATOR RECLAIM (finalize expired drops + withdraw pending)
+    // =========================================================
+    let creatorState = { drops: [], pending: [], scanning: false, busy: false };
+    const tokenMetaCache = {};
+
+    function escHtml(v) {
+      return String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function readProvider() {
+      return new ethers.JsonRpcProvider("https://mainnet.base.org", 8453, { staticNetwork: true });
+    }
+
+    async function getTokenMeta(tokenAddr, provider) {
+      const key = tokenAddr.toLowerCase();
+      if (tokenMetaCache[key]) return tokenMetaCache[key];
+      const t = new ethers.Contract(tokenAddr, ERC20_ABI, provider);
+      let symbol = "TOKEN", decimals = 18;
+      try { symbol = await t.symbol(); } catch (e) {}
+      try { decimals = Number(await t.decimals()); } catch (e) {}
+      tokenMetaCache[key] = { symbol, decimals };
+      return tokenMetaCache[key];
+    }
+
+    function fmtAmt(raw, decimals) {
+      const str = ethers.formatUnits(raw, decimals);
+      const [i, f = ""] = str.split(".");
+      const intPart = i.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      const frac = f.replace(/0+$/, "").slice(0, 6);
+      return frac ? `${intPart}.${frac}` : intPart;
+    }
+
+    function friendlyError(e) {
+      const code = e && (e.code || (e.info && e.info.error && e.info.error.code));
+      if (code === 'ACTION_REJECTED' || code === 4001) return "You rejected the transaction in your wallet.";
+      const name = e && e.revert && e.revert.name;
+      const map = {
+        DropNotExpired: "This drop has not expired yet.",
+        DropAlreadyFinalized: "This drop is already finalized.",
+        InsufficientPendingBalance: "Nothing is pending for this wallet and token.",
+        DropNotFound: "Drop not found."
+      };
+      if (name && map[name]) return map[name];
+      return (e && (e.reason || e.shortMessage || e.message)) || String(e);
+    }
+
+    async function prefillFinalizeInput() {
+      try {
+        const inp = document.getElementById('finalizeDropId');
+        if (!inp || inp.value) return;
+        const vault = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, readProvider());
+        const n = Number(await vault.dropCounter());
+        if (n > 0 && !inp.value) inp.value = n;
+      } catch (e) { /* leave blank */ }
+    }
+
+    async function getConnectedAddress() {
+      if (userAddress) return userAddress;
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts && accounts.length > 0) { userAddress = accounts[0]; return userAddress; }
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    function setCreatorButtons() {
+      const now = Math.floor(Date.now() / 1000);
+      const needsFinalize = creatorState.drops.some(d => !d.finalized && now > d.expiresAt && d.remainingBalance > 0n);
+      const hasPending = creatorState.pending.some(p => p.amount > 0n);
+      const ra = document.getElementById('btnReclaimAll');
+      const wp = document.getElementById('btnWithdrawPending');
+      if (ra) ra.disabled = creatorState.busy || !(needsFinalize || hasPending);
+      if (wp) wp.disabled = creatorState.busy || !hasPending;
+    }
+
+    async function scanCreatorDrops() {
+      if (creatorState.scanning) return;
+      const summary = document.getElementById('creatorScanSummary');
+      const listEl = document.getElementById('creatorDropsList');
+      const pendEl = document.getElementById('creatorPendingList');
+      if (!summary) return;
+      creatorState.scanning = true;
+      try {
+        const me = await getConnectedAddress();
+        if (!me) {
+          summary.textContent = "Connect your wallet to list drops you created.";
+          listEl.innerHTML = ""; pendEl.innerHTML = "";
+          creatorState.drops = []; creatorState.pending = [];
+          setCreatorButtons();
+          return;
+        }
+        summary.textContent = `Scanning vault drops created by ${me.slice(0,6)}...${me.slice(-4)} ...`;
+        const provider = readProvider();
+        const vault = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, provider);
+        const n = Number(await vault.dropCounter());
+        const now = Math.floor(Date.now() / 1000);
+        const mine = [];
+        for (let id = 1; id <= n; id++) {
+          const d = await vault.drops(id);
+          if (d.creator.toLowerCase() !== me.toLowerCase()) continue;
+          const meta = await getTokenMeta(d.token, provider);
+          mine.push({
+            id, token: d.token, symbol: meta.symbol, decimals: meta.decimals,
+            total: d.totalAmount, remainingBalance: d.remainingBalance,
+            claimedCount: Number(d.claimedCount), eligible: Number(d.totalEligibleNFTs),
+            expiresAt: Number(d.expiresAt), finalized: d.finalized
+          });
+        }
+        creatorState.drops = mine;
+
+        // pending balances per distinct token (tokens from creator's drops)
+        const tokens = [...new Set(mine.map(d => d.token.toLowerCase()))];
+        const pending = [];
+        for (const t of tokens) {
+          const tokenAddr = mine.find(d => d.token.toLowerCase() === t).token;
+          const meta = await getTokenMeta(tokenAddr, provider);
+          const amount = await vault.pendingBalances(me, tokenAddr);
+          pending.push({ token: tokenAddr, symbol: meta.symbol, decimals: meta.decimals, amount });
+        }
+        creatorState.pending = pending;
+
+        // render drops
+        if (mine.length === 0) {
+          summary.textContent = `No drops found for ${me.slice(0,6)}...${me.slice(-4)} (${n} drop(s) in vault).`;
+          listEl.innerHTML = "";
+        } else {
+          summary.textContent = `${mine.length} drop(s) created by ${me.slice(0,6)}...${me.slice(-4)} (of ${n} in vault).`;
+          let rows = "";
+          for (const d of mine) {
+            let status, color;
+            if (d.finalized) { status = "Finalized"; color = "#6ee7b7"; }
+            else if (now <= d.expiresAt) { status = "Active until " + new Date(d.expiresAt * 1000).toLocaleString(); color = "var(--gold-bright)"; }
+            else if (d.remainingBalance > 0n) { status = "Expired - ready to finalize"; color = "#fca5a5"; }
+            else { status = "Expired - nothing remaining"; color = "var(--text-muted)"; }
+            rows += `<tr>
+              <td style="padding:6px 10px;">#${d.id}</td>
+              <td style="padding:6px 10px;">${escHtml(d.symbol)}</td>
+              <td style="padding:6px 10px;">${escHtml(fmtAmt(d.total, d.decimals))}</td>
+              <td style="padding:6px 10px;">${d.claimedCount}/${d.eligible}</td>
+              <td style="padding:6px 10px;">${escHtml(fmtAmt(d.remainingBalance, d.decimals))}</td>
+              <td style="padding:6px 10px; color:${color};">${escHtml(status)}</td>
+            </tr>`;
+          }
+          listEl.innerHTML = `<table style="width:100%; border-collapse:collapse; font-family: var(--font-mono); font-size:12px; text-align:left;">
+            <thead><tr style="color: var(--text-muted);"><th style="padding:6px 10px;">Drop</th><th style="padding:6px 10px;">Token</th><th style="padding:6px 10px;">Deposited</th><th style="padding:6px 10px;">Claimed</th><th style="padding:6px 10px;">Unclaimed in vault</th><th style="padding:6px 10px;">Status</th></tr></thead>
+            <tbody>${rows}</tbody></table>`;
+        }
+
+        // render pending
+        if (pending.length === 0) {
+          pendEl.innerHTML = "";
+        } else {
+          pendEl.innerHTML = `<div style="font-size:13px; color: var(--text-muted); margin-bottom:6px;">Pending balances (withdrawable now):</div>` +
+            pending.map(p => `<div style="font-family: var(--font-mono); font-size:13px; color:${p.amount > 0n ? 'var(--gold-bright)' : 'var(--text-muted)'};">${escHtml(fmtAmt(p.amount, p.decimals))} ${escHtml(p.symbol)}</div>`).join("");
+        }
+        setCreatorButtons();
+      } catch (e) {
+        summary.textContent = "Scan failed: " + friendlyError(e) + " (click Re-Scan My Drops to retry)";
+      } finally {
+        creatorState.scanning = false;
+      }
+    }
+
+    // Wait for a tx; if the wallet (e.g. smart account / 7702 bundler) gives an odd receipt, caller re-verifies on-chain.
+    async function sendAndWait(label, fn) {
+      showStatus('info', `${label}: confirm in your wallet...`);
+      const tx = await fn();
+      showStatus('info', `${label}: submitted, waiting for confirmation...`, tx.hash);
+      const receipt = await tx.wait();
+      if (!receipt || receipt.status !== 1) throw new Error(`${label} reverted on-chain.`);
+      return tx.hash;
+    }
+
+    async function withdrawOne(vault, me, p, prefix) {
+      const hash = await sendAndWait(`${prefix}Withdraw ${p.symbol}`, () => vault.withdrawPending(p.token));
+      showStatus('success', `✓ Withdrew ${fmtAmt(p.amount, p.decimals)} ${escHtml(p.symbol)} to ${me.slice(0,6)}...${me.slice(-4)}`, hash);
+    }
+
+    async function withdrawPendingAll() {
+      if (creatorState.busy) return;
+      creatorState.busy = true; setCreatorButtons();
+      try {
+        clearStatus();
+        const signer = await getSigner();
+        const me = await signer.getAddress();
+        await scanCreatorDrops();
+        const vault = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
+        const todo = creatorState.pending.filter(p => p.amount > 0n);
+        if (todo.length === 0) { showStatus('info', "Nothing pending to withdraw for this wallet."); return; }
+        let i = 0;
+        for (const p of todo) { i++; await withdrawOne(vault, me, p, `(${i}/${todo.length}) `); }
+      } catch (e) {
+        showStatus('error', "Withdraw failed: " + escHtml(friendlyError(e)) + " Nothing was lost; you can click again to retry.");
+      } finally {
+        creatorState.busy = false;
+        await scanCreatorDrops();
+        setCreatorButtons();
+      }
+    }
+
+    async function reclaimAll() {
+      if (creatorState.busy) return;
+      creatorState.busy = true; setCreatorButtons();
+      try {
+        clearStatus();
+        const signer = await getSigner();
+        const me = await signer.getAddress();
+        await scanCreatorDrops();
+        const vault = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
+        const now = Math.floor(Date.now() / 1000);
+        const toFinalize = creatorState.drops.filter(d => !d.finalized && now > d.expiresAt && d.remainingBalance > 0n);
+
+        // Step 1: finalize each expired, unfinalized drop with unclaimed tokens (sequential)
+        let i = 0;
+        for (const d of toFinalize) {
+          i++;
+          // re-check on chain right before sending (someone else may have finalized it)
+          const cur = await vault.drops(d.id);
+          if (cur.finalized) continue;
+          const hash = await sendAndWait(`Step 1: Finalize drop #${d.id} (${i}/${toFinalize.length})`, () => vault.finalizeDrop(d.id));
+          showStatus('success', `✓ Drop #${d.id} finalized. Refund credited to pending balance.`, hash);
+        }
+
+        // Step 2: re-read pending balances and withdraw every token with pending > 0 (sequential)
+        await scanCreatorDrops();
+        const todo = creatorState.pending.filter(p => p.amount > 0n);
+        if (todo.length === 0) {
+          showStatus('info', "Finalize step done. No pending balance to withdraw for this wallet.");
+          return;
+        }
+        let j = 0;
+        for (const p of todo) { j++; await withdrawOne(vault, me, p, `Step 2: (${j}/${todo.length}) `); }
+        showStatus('success', `✓ Reclaim complete. ${todo.map(p => fmtAmt(p.amount, p.decimals) + " " + escHtml(p.symbol)).join(", ")} sent to ${me.slice(0,6)}...${me.slice(-4)}.`);
+      } catch (e) {
+        showStatus('error', "Reclaim stopped: " + escHtml(friendlyError(e)) + " Completed steps are kept on-chain; click the button again to continue where it stopped.");
+      } finally {
+        creatorState.busy = false;
+        await scanCreatorDrops();
+        setCreatorButtons();
+      }
     }
 
     // Auto-detect injected wallet if already authorized
