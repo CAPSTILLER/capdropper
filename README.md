@@ -12,7 +12,7 @@ CAPdropper allows any game or player to sponsor and lock an ERC-20 token airdrop
 
 ### 🔑 Security & Invariants
 1. **Gate Snapshotting**: Drops query `getAllERC721Gates()` on `0x54C3C8C9E2180c6b90652983d1c15cF933f1a263` at drop creation time. Active collections are snapshotted permanently into that `dropId`. Future changes to the gate registry never corrupt existing drops.
-2. **Automated Supply Counting**: Distribution split is automatically calculated by scanning all minted token IDs across active gate collections (e.g. 8,888 minted tokens for King Midas) with zero manual guesswork.
+2. **Automated Supply Counting**: Distribution split is automatically calculated from the live `totalSupply()` of every active gate collection, with zero manual guesswork.
 3. **Per-Token-ID Claim Lock**: Claiming is tracked strictly per `(dropId, collectionAddress, tokenId)`. The caller must be the verified on-chain `ownerOf(tokenId)`. Once claimed, that specific NFT cannot double-dip even if transferred or traded.
 4. **Fee-on-Transfer Protection**: Measures contract balance before and after `transferFrom` so tokens with burn/tax mechanics never brick remaining claimers.
 5. **Pull-Over-Push Expiration**: When a drop's duration expires, `finalizeDrop(dropId)` splits remaining unclaimed tokens:
@@ -29,8 +29,13 @@ CAPdropper allows any game or player to sponsor and lock an ERC-20 token airdrop
 |---|---|---|---|
 | **CAPdropper Vault** | Base | `0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7` | Master airdrop & escrow vault (Live) |
 | **Midas Gate Registry** | Base | `0x54C3C8C9E2180c6b90652983d1c15cF933f1a263` | Authoritative Midas Gate registry with matrix light sockets & admin keys |
-| **Active Midas Collection** | Base | `0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7` | King Midas (8,888 minted NFTs) |
 | **Protocol Treasury** | Base | `0xA12506f742F4AB0980a57264871DB56A1A150793` | Designated 10% expiration fee recipient |
+
+### Active gate collections are read live
+
+The app does not hardcode any NFT collection. On every page load it calls `getAllERC721Gates()` on the Midas Gate Registry and shows only the entries marked active. For each one it reads `name()`, `totalSupply()` and the token ID range from the collection contract, and resolves an image from `tokenURI(displayTokenId)` (falling back to the first token, then `contractURI()`). `ipfs://` links are loaded through public gateways and `data:` URIs are decoded in the browser. A contract removed from the gate disappears from the app, and a newly added one appears, with no code change.
+
+Right before a drop is funded, the app re-reads the registry and the supplies. If anything changed since the page loaded, it refreshes the list and asks the creator to review before sending.
 
 ---
 

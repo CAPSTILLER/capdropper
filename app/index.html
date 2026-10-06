@@ -75,6 +75,12 @@
     .nft-supply-badge { display: inline-block; background: rgba(245, 158, 11, 0.2); border: 1px solid var(--gold-primary); color: var(--gold-bright); font-size: 11px; font-family: var(--font-mono); padding: 2px 6px; border-radius: 4px; margin-top: 6px; }
     .badge-check { position: absolute; top: 8px; right: 8px; background: var(--gold-primary); color: #000; font-size: 10px; font-weight: 800; border-radius: 4px; padding: 2px 6px; display: none; }
     .nft-card.selected .badge-check { display: block; }
+    .nft-card.no-supply { cursor: default; opacity: 0.75; }
+    .nft-range { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 4px; }
+    .gate-empty { grid-column: 1 / -1; text-align: center; padding: 28px 16px; background: #0c0e18; border: 1px dashed #3b3524; border-radius: 10px; color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+    .status-dot.loading { background: var(--gold-primary); box-shadow: 0 0 8px var(--gold-primary); }
+    .status-dot.empty { background: #6b7280; box-shadow: none; }
+    .status-dot.error { background: var(--accent-red); box-shadow: 0 0 8px var(--accent-red); }
 
     .preview-box { background: #0d101a; border: 1px dashed var(--gold-primary); padding: 18px; border-radius: 10px; margin-bottom: 20px; }
     .preview-box h4 { color: var(--gold-bright); margin-bottom: 12px; font-size: 15px; }
@@ -108,8 +114,8 @@
 
     <div class="gate-banner">
       <div class="gate-indicator">
-        <div id="gateDot" class="status-dot"></div>
-        <span id="gateStatusText">Midas Gate Registry: Active on Base</span>
+        <div id="gateDot" class="status-dot loading"></div>
+        <span id="gateStatusText">Midas Gate Registry: reading active contracts from Base...</span>
       </div>
       <div style="font-family: var(--font-mono); font-size: 12px; color: var(--gold-bright);">
         Registry: 0x54C3C8C9E2180c6b90652983d1c15cF933f1a263
@@ -150,7 +156,7 @@
             <label style="margin-bottom: 0;">Automated Gate NFT Split Count</label>
             <button id="btnToggleChoose" class="btn btn-secondary btn-small" onclick="toggleGateChooser()">Choose Gate NFTs</button>
           </div>
-          <input type="text" id="splitDisplay" class="form-control" readonly value="Auto: 8,888 Minted NFTs across 1 Active Gate">
+          <input type="text" id="splitDisplay" class="form-control" readonly value="Reading active gate contracts from Base...">
         </div>
       </div>
 
@@ -159,21 +165,16 @@
         <div class="selector-head">
           <div>
             <strong style="color: var(--gold-bright); font-size: 14px;">Active Midas Gate Contracts & Token Supplies</strong>
-            <p style="font-size: 12px; color: var(--text-muted);">Tap a contract card to isolate selection. If no card is chosen, drop splits evenly across all active gate token IDs.</p>
+            <p style="font-size: 12px; color: var(--text-muted);">Read live from the Midas Gate Registry on Base every time this page loads. Tap a contract card to isolate selection. If no card is chosen, drop splits evenly across all active gate token IDs.</p>
           </div>
           <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary btn-small" onclick="loadGates()">Refresh</button>
             <button class="btn btn-secondary btn-small" onclick="selectAllGates()">Select All</button>
             <button class="btn btn-secondary btn-small" onclick="resetGateSelection()">Reset / Default</button>
           </div>
         </div>
         <div id="gateGrid" class="gate-grid">
-          <div class="nft-card selected" id="card-0" onclick="toggleCard(0)">
-            <span class="badge-check">✓ ACTIVE</span>
-            <img src="https://i2c.seadn.io/base/0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7/a8981d374a51b95e78d50110096abd/33a8981d374a51b95e78d50110096abd.jpeg" alt="King Midas">
-            <div class="nft-title">King Midas</div>
-            <div class="nft-sub">0x3bC5...e8B7</div>
-            <div class="nft-supply-badge">8,888 Minted Token IDs</div>
-          </div>
+          <div class="gate-empty">Reading active gate contracts from the Midas Gate Registry...</div>
         </div>
       </div>
 
@@ -200,15 +201,15 @@
         </div>
         <div class="preview-stat">
           <span>Active Gate Contracts Counted:</span>
-          <span id="previewActiveContracts" style="color: var(--gold-bright);">1 Contract (King Midas)</span>
+          <span id="previewActiveContracts" style="color: var(--gold-bright);">Loading...</span>
         </div>
         <div class="preview-stat">
           <span>Total Minted Token IDs for Split:</span>
-          <strong id="previewTotalNFTs" style="color: var(--gold-bright);">8,888 Token IDs</strong>
+          <strong id="previewTotalNFTs" style="color: var(--gold-bright);">Loading...</strong>
         </div>
         <div class="preview-stat">
           <span>Even Payout Per NFT:</span>
-          <strong id="previewPerNFT" style="color: var(--gold-bright); font-size: 15px;">1.1251 Tokens / NFT</strong>
+          <strong id="previewPerNFT" style="color: var(--gold-bright); font-size: 15px;">Loading...</strong>
         </div>
         <div class="preview-stat">
           <span>Expiration Settlement:</span>
@@ -263,8 +264,8 @@
               <input type="number" id="claimDropId" class="form-control" value="2">
             </div>
             <div class="form-group">
-              <label>King Midas NFT Token ID Owned</label>
-              <input type="number" id="claimTokenId" class="form-control" placeholder="e.g. 442" value="442">
+              <label>Gate NFT Token ID Owned</label>
+              <input type="number" id="claimTokenId" class="form-control" placeholder="e.g. 208" min="0">
             </div>
           </div>
           <button id="btnManualClaim" class="btn btn-secondary" onclick="claimManualSingle()">Claim Single Token ID</button>
@@ -313,7 +314,31 @@
     const REGISTRY_ADDRESS = "0x54C3C8C9E2180c6b90652983d1c15cF933f1a263";
     const TREASURY_ADDRESS = "0xA12506f742F4AB0980a57264871DB56A1A150793";
     const BASE_CHAIN_ID_HEX = "0x2105"; // 8453
-    const DEFAULT_GATE_IMAGE = "https://i2c.seadn.io/base/0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7/a8981d374a51b95e78d50110096abd/33a8981d374a51b95e78d50110096abd.jpeg";
+    const MULTICALL3_ADDRESS = "0xcA11bde05977b3631167028862bE2a173976CA11";
+
+    // Public Base RPCs, tried in order (the last one that worked is tried first next time).
+    const BASE_RPCS = [
+      "https://base-rpc.publicnode.com",
+      "https://mainnet.base.org",
+      "https://base.meowrpc.com",
+      "https://base-mainnet.public.blastapi.io",
+      "https://base.drpc.org"
+    ];
+    // Public IPFS gateways for NFT metadata and images, tried in order.
+    const IPFS_GATEWAYS = [
+      "https://gateway.pinata.cloud/ipfs/",
+      "https://ipfs.filebase.io/ipfs/",
+      "https://ipfs.io/ipfs/",
+      "https://dweb.link/ipfs/"
+    ];
+
+    const REGISTRY_ABI = [
+      "function getAllERC721Gates() view returns (tuple(address collection, uint256 displayTokenId, bool active)[])"
+    ];
+
+    const MULTICALL3_ABI = [
+      "function aggregate3(tuple(address target, bool allowFailure, bytes callData)[] calls) view returns (tuple(bool success, bytes returnData)[] returnData)"
+    ];
 
     const ERC20_ABI = [
       "function name() view returns (string)",
@@ -326,8 +351,13 @@
 
     const ERC721_ABI = [
       "function name() view returns (string)",
+      "function symbol() view returns (string)",
+      "function totalSupply() view returns (uint256)",
       "function balanceOf(address owner) view returns (uint256)",
-      "function ownerOf(uint256 tokenId) view returns (address)"
+      "function ownerOf(uint256 tokenId) view returns (address)",
+      "function tokenURI(uint256 tokenId) view returns (string)",
+      "function contractURI() view returns (string)",
+      "function tokenOfOwnerByIndex(address owner, uint256 index) view returns (uint256)"
     ];
 
     const VAULT_ABI = [
@@ -346,16 +376,302 @@
     ];
 
     let userAddress = null;
-    let availableGates = [
-      {
-        id: 0,
-        name: "King Midas",
-        collection: "0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7",
-        mintedSupply: 8888,
-        selected: true,
-        image: DEFAULT_GATE_IMAGE
+    // Active gate contracts, read live from the Midas Gate Registry on every page load.
+    // Nothing is hardcoded: a contract removed from the gate disappears here, and a newly added one appears.
+    let availableGates = [];
+    const gateLoad = { state: 'loading', error: '', seq: 0 };
+
+    // ---------- RPC helpers (public Base RPCs with fallback) ----------
+    const providerCache = {};
+    let preferredRpc = 0;
+
+    function rpcProvider(url) {
+      if (!providerCache[url]) {
+        providerCache[url] = new ethers.JsonRpcProvider(url, 8453, { staticNetwork: true, batchMaxCount: 1 });
       }
-    ];
+      return providerCache[url];
+    }
+
+    function withTimeout(promise, ms, label) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error((label || 'Request') + ' timed out')), ms))
+      ]);
+    }
+
+    // Runs fn(provider) against each public RPC until one answers. A contract revert is a real
+    // answer (the same on every RPC), so it is thrown right away instead of retried.
+    async function withRpc(fn) {
+      let lastErr;
+      for (let k = 0; k < BASE_RPCS.length; k++) {
+        const idx = (preferredRpc + k) % BASE_RPCS.length;
+        try {
+          const result = await withTimeout(fn(rpcProvider(BASE_RPCS[idx])), 15000, 'Base RPC');
+          preferredRpc = idx;
+          return result;
+        } catch (e) {
+          if (e && e.code === 'CALL_EXCEPTION') throw e;
+          lastErr = e;
+        }
+      }
+      throw lastErr || new Error('All Base RPCs failed');
+    }
+
+    function shortAddr(a) {
+      return a ? `${a.slice(0, 6)}...${a.slice(-4)}` : '';
+    }
+
+    // ---------- Metadata helpers (tokenURI / contractURI, ipfs://, data: URIs) ----------
+    function ipfsPath(uri) {
+      if (!uri) return null;
+      if (uri.startsWith('ipfs://')) return uri.slice(7).replace(/^ipfs\//, '');
+      const m = uri.match(/^https?:\/\/[^/]+\/ipfs\/(.+)$/);
+      return m ? m[1] : null;
+    }
+
+    // Returns candidate http(s)/data URLs for a metadata or image URI, in the order to try them.
+    function uriCandidates(uri) {
+      if (!uri || typeof uri !== 'string') return [];
+      uri = uri.trim();
+      if (uri.startsWith('data:')) return [uri];
+      const path = ipfsPath(uri);
+      if (path) return IPFS_GATEWAYS.map(g => g + path);
+      if (uri.startsWith('ar://')) return ['https://arweave.net/' + uri.slice(5)];
+      if (/^https?:\/\//i.test(uri)) return [uri];
+      if (/^(Qm[1-9A-HJ-NP-Za-km-z]{44}|baf[a-z2-7]{50,})/.test(uri)) return IPFS_GATEWAYS.map(g => g + uri);
+      return [];
+    }
+
+    function decodeDataJson(uri) {
+      const comma = uri.indexOf(',');
+      if (comma < 0) return null;
+      const head = uri.slice(5, comma);
+      const body = uri.slice(comma + 1);
+      try {
+        if (/;base64/i.test(head)) {
+          const bin = atob(body);
+          const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+          return JSON.parse(new TextDecoder().decode(bytes));
+        }
+        return JSON.parse(decodeURIComponent(body));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    async function fetchJsonUri(uri) {
+      for (const url of uriCandidates(uri)) {
+        if (url.startsWith('data:')) {
+          const j = decodeDataJson(url);
+          if (j) return j;
+          continue;
+        }
+        try {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 8000);
+          const res = await fetch(url, { signal: ctrl.signal });
+          clearTimeout(timer);
+          if (!res.ok) continue;
+          return await res.json();
+        } catch (_) { /* try next gateway */ }
+      }
+      return null;
+    }
+
+    function safeImageUrls(uri) {
+      return uriCandidates(uri).filter(u => /^https:\/\//i.test(u) || /^data:image\//i.test(u));
+    }
+
+    function placeholderImage(label) {
+      const text = String(label || 'NFT').replace(/[^A-Za-z0-9 ]/g, '').trim().slice(0, 2).toUpperCase() || 'NFT';
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="280" height="140" viewBox="0 0 280 140"><rect width="280" height="140" fill="#0b0d14"/><text x="140" y="84" font-family="monospace" font-size="40" font-weight="700" fill="#f59e0b" text-anchor="middle">${text}</text></svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    // ---------- Registry + collection reads ----------
+    async function fetchActiveGateList() {
+      const raw = await withRpc(p => new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, p).getAllERC721Gates());
+      const seen = new Set();
+      const out = [];
+      for (const g of raw) {
+        const collection = g.collection ?? g[0];
+        const displayTokenId = g.displayTokenId ?? g[1];
+        const active = g.active ?? g[2];
+        if (!active || !collection || collection === ethers.ZeroAddress) continue;
+        const key = collection.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ collection: ethers.getAddress(collection), displayTokenId: BigInt(displayTokenId) });
+      }
+      return out;
+    }
+
+    function nftCall(addr, fn, ...args) {
+      return withRpc(p => new ethers.Contract(addr, ERC721_ABI, p)[fn](...args));
+    }
+
+    async function nftCallOpt(addr, fn, ...args) {
+      try { return await nftCall(addr, fn, ...args); } catch (_) { return null; }
+    }
+
+    // Name, minted supply and token ID range, straight from the collection contract.
+    async function readGateChainData(gate) {
+      const addr = gate.collection;
+      const [name, symbol, supplyRaw] = await Promise.all([
+        nftCallOpt(addr, 'name'),
+        nftCallOpt(addr, 'symbol'),
+        nftCallOpt(addr, 'totalSupply')
+      ]);
+      const out = {
+        name: (name && String(name).trim()) || (symbol && String(symbol).trim()) || shortAddr(addr),
+        symbol: symbol || '',
+        mintedSupply: supplyRaw == null ? null : Number(supplyRaw),
+        startId: null,
+        endId: null
+      };
+      if (out.mintedSupply && out.mintedSupply > 0) {
+        // Token IDs usually start at 0 or 1. Check which one exists, then confirm the last ID.
+        if (await nftCallOpt(addr, 'ownerOf', 0)) out.startId = 0;
+        else if (await nftCallOpt(addr, 'ownerOf', 1)) out.startId = 1;
+        if (out.startId !== null) {
+          const last = out.startId + out.mintedSupply - 1;
+          const [lastOwner, nextOwner] = await Promise.all([
+            nftCallOpt(addr, 'ownerOf', last),
+            nftCallOpt(addr, 'ownerOf', last + 1)
+          ]);
+          if (lastOwner && !nextOwner) out.endId = last;
+        }
+      }
+      return out;
+    }
+
+    // A representative image: the gate's display token, then the first token, then contract metadata.
+    async function resolveGateImages(gate) {
+      const addr = gate.collection;
+      const tokenIds = [gate.displayTokenId];
+      if (gate.startId !== null && BigInt(gate.startId) !== gate.displayTokenId) tokenIds.push(BigInt(gate.startId));
+      for (const id of tokenIds) {
+        const uri = await nftCallOpt(addr, 'tokenURI', id);
+        if (!uri) continue;
+        const meta = await fetchJsonUri(uri);
+        const img = meta && (meta.image || meta.image_url || meta.image_data);
+        if (img) {
+          if (typeof img === 'string' && img.trim().startsWith('<svg')) {
+            return ['data:image/svg+xml;utf8,' + encodeURIComponent(img)];
+          }
+          const urls = safeImageUrls(img);
+          if (urls.length) return urls;
+        }
+      }
+      const cUri = await nftCallOpt(addr, 'contractURI');
+      if (cUri) {
+        const meta = await fetchJsonUri(cUri);
+        const img = meta && (meta.image || meta.image_url);
+        const urls = safeImageUrls(img);
+        if (urls.length) return urls;
+      }
+      return [];
+    }
+
+    async function loadGates() {
+      const seq = ++gateLoad.seq;
+      gateLoad.state = 'loading';
+      gateLoad.error = '';
+      renderGateCards();
+      updatePreview();
+      let list;
+      try {
+        list = await fetchActiveGateList();
+      } catch (e) {
+        if (seq !== gateLoad.seq) return;
+        gateLoad.state = 'error';
+        gateLoad.error = (e && (e.shortMessage || e.message)) || String(e);
+        availableGates = [];
+        renderGateCards();
+        updatePreview();
+        return;
+      }
+      if (seq !== gateLoad.seq) return;
+
+      const prevSelected = new Map(availableGates.map(g => [g.collection.toLowerCase(), g.selected]));
+      availableGates = list.map((g, i) => ({
+        id: i,
+        collection: g.collection,
+        displayTokenId: g.displayTokenId,
+        name: shortAddr(g.collection),
+        symbol: '',
+        mintedSupply: null,
+        startId: null,
+        endId: null,
+        images: [],
+        metaState: 'loading',
+        selected: prevSelected.has(g.collection.toLowerCase()) ? prevSelected.get(g.collection.toLowerCase()) : true
+      }));
+      gateLoad.state = availableGates.length ? 'ready' : 'empty';
+      renderGateCards();
+      updatePreview();
+
+      await Promise.all(availableGates.map(async gate => {
+        try {
+          Object.assign(gate, await readGateChainData(gate));
+        } catch (_) { /* keep address fallback */ }
+        gate.metaState = 'done';
+        if (seq !== gateLoad.seq) return;
+        renderGateCards();
+        updatePreview();
+        try {
+          gate.images = await resolveGateImages(gate);
+        } catch (_) {
+          gate.images = [];
+        }
+        if (seq !== gateLoad.seq) return;
+        renderGateCards();
+      }));
+    }
+
+    async function getCollectionName(addr) {
+      const g = availableGates.find(x => x.collection.toLowerCase() === addr.toLowerCase());
+      if (g && g.metaState === 'done') return g.name;
+      const name = await nftCallOpt(addr, 'name');
+      return (name && String(name).trim()) || shortAddr(addr);
+    }
+
+    // The gates the split covers: the selected cards, or every active gate if none are selected.
+    function getSplitGates() {
+      const sel = availableGates.filter(g => g.selected);
+      return sel.length ? sel : availableGates.slice();
+    }
+
+    // Right before funding: make sure the registry still lists exactly the contracts shown,
+    // and that minted supplies have not changed. If anything changed, refresh and ask to review.
+    async function verifyGatesBeforeFunding() {
+      if (gateLoad.state === 'loading') throw new Error("Still reading the Midas Gate list from Base. Try again in a moment.");
+      const live = await fetchActiveGateList();
+      const liveKey = live.map(g => g.collection.toLowerCase()).sort().join(',');
+      const shownKey = availableGates.map(g => g.collection.toLowerCase()).sort().join(',');
+      if (liveKey !== shownKey) {
+        await loadGates();
+        throw new Error("The Midas Gate list changed on Base since this page loaded. The list is now refreshed; review it and tap Fund again.");
+      }
+      if (availableGates.length === 0) {
+        throw new Error("There are no active Midas Gate contracts right now, so there is nothing to split across.");
+      }
+      const split = getSplitGates();
+      let changed = false;
+      for (const g of split) {
+        const fresh = await nftCallOpt(g.collection, 'totalSupply');
+        if (fresh == null) throw new Error(`Could not read the minted supply of ${g.name} (${g.collection}). Try again in a moment.`);
+        if (Number(fresh) !== g.mintedSupply) {
+          g.mintedSupply = Number(fresh);
+          changed = true;
+        }
+      }
+      if (changed) {
+        renderGateCards();
+        updatePreview();
+        throw new Error("Minted supply changed since the page loaded (new mints or burns). The split is updated above; review it and tap Fund again.");
+      }
+    }
 
     let userClaimableItems = []; // Stores auto-detected eligible drops
 
@@ -458,48 +774,61 @@
       }
     }
 
-    // DISCOVER USER OWNED NFTS ON BASE
+    // DISCOVER USER OWNED NFTS ON BASE (onchain only)
+    // 1) balanceOf, 2) tokenOfOwnerByIndex if the collection is enumerable,
+    // 3) otherwise check ownerOf across the minted ID range in batches through Multicall3.
     async function getUserNFTTokenIds(walletAddr, collectionAddr) {
       const ownedIds = [];
+      let balance = 0;
       try {
-        // Attempt Reservoir Base indexer query
-        const url = `https://api-base.reservoir.tools/users/${walletAddr}/tokens/v10?collection=${collectionAddr}&limit=50`;
-        const res = await fetch(url);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.tokens) {
-            data.tokens.forEach(t => {
-              if (t.token && t.token.tokenId) {
-                ownedIds.push(parseInt(t.token.tokenId));
-              }
-            });
-          }
-        }
+        balance = Number(await nftCall(collectionAddr, 'balanceOf', walletAddr));
       } catch (e) {
-        console.warn("Reservoir NFT indexer error, using on-chain fallback:", e);
+        console.warn("balanceOf failed for", collectionAddr, e);
+        return ownedIds;
+      }
+      if (!balance) return ownedIds;
+
+      try {
+        for (let i = 0; i < balance && i < 500; i++) {
+          ownedIds.push(Number(await nftCall(collectionAddr, 'tokenOfOwnerByIndex', walletAddr, i)));
+        }
+        return ownedIds;
+      } catch (_) {
+        ownedIds.length = 0; // not enumerable, fall through to the range scan
       }
 
-      // Hardcoded fallback if indexer is cold: verify default known token IDs (e.g., 442)
-      if (ownedIds.length === 0) {
+      let supply = null;
+      const g = availableGates.find(x => x.collection.toLowerCase() === collectionAddr.toLowerCase());
+      if (g && g.mintedSupply != null) supply = g.mintedSupply;
+      if (supply == null) {
+        const s = await nftCallOpt(collectionAddr, 'totalSupply');
+        supply = s == null ? 10000 : Number(s);
+      }
+      // Extra headroom covers ID gaps left by burned tokens.
+      const maxId = Math.min(supply + 500, 20000);
+      const iface = new ethers.Interface(["function ownerOf(uint256 tokenId) view returns (address)"]);
+      const me = walletAddr.toLowerCase();
+      const CHUNK = 300;
+      for (let start = 0; start <= maxId && ownedIds.length < balance; start += CHUNK) {
+        const calls = [];
+        for (let id = start; id < Math.min(start + CHUNK, maxId + 1); id++) {
+          calls.push({ target: collectionAddr, allowFailure: true, callData: iface.encodeFunctionData('ownerOf', [id]) });
+        }
         try {
-          const provider = new ethers.JsonRpcProvider("https://mainnet.base.org");
-          const nft = new ethers.Contract(collectionAddr, ERC721_ABI, provider);
-          const bal = await nft.balanceOf(walletAddr);
-          if (bal > 0) {
-            // Check known sample IDs
-            const candidateIds = [442, 4, 1, 2, 3];
-            for (const cid of candidateIds) {
-              try {
-                const owner = await nft.ownerOf(cid);
-                if (owner.toLowerCase() === walletAddr.toLowerCase() && !ownedIds.includes(cid)) {
-                  ownedIds.push(cid);
-                }
-              } catch (_) {}
-            }
-          }
-        } catch (_) {}
+          const res = await withRpc(p => new ethers.Contract(MULTICALL3_ADDRESS, MULTICALL3_ABI, p).aggregate3(calls));
+          res.forEach((r, j) => {
+            const ok = r.success ?? r[0];
+            const data = r.returnData ?? r[1];
+            if (!ok || !data || data.length < 66) return;
+            try {
+              const owner = iface.decodeFunctionResult('ownerOf', data)[0];
+              if (owner.toLowerCase() === me) ownedIds.push(start + j);
+            } catch (_) {}
+          });
+        } catch (e) {
+          console.warn("Owner scan batch failed", collectionAddr, start, e);
+        }
       }
-
       return ownedIds;
     }
 
@@ -531,11 +860,12 @@
         subText.innerText = `Scanning on Base for wallet ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`;
         container.innerHTML = `<div class="empty-claims" style="grid-column: 1 / -1;">🔍 Querying vault drops and verifying your NFT ownership...</div>`;
 
-        const provider = new ethers.JsonRpcProvider("https://mainnet.base.org");
+        const provider = readProvider();
         const vault = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, provider);
         const totalDropsCount = Number(await vault.dropCounter());
 
         userClaimableItems = [];
+        const ownedCache = new Map(); // collection -> owned token IDs (one lookup per collection per scan)
         const now = Math.floor(Date.now() / 1000);
 
         for (let dropId = 1; dropId <= totalDropsCount; dropId++) {
@@ -567,7 +897,10 @@
 
             // Check each eligible collection against user's owned NFTs
             for (const col of collections) {
-              const ownedTokenIds = await getUserNFTTokenIds(userAddress, col);
+              const colKey = col.toLowerCase();
+              if (!ownedCache.has(colKey)) ownedCache.set(colKey, await getUserNFTTokenIds(userAddress, col));
+              const ownedTokenIds = ownedCache.get(colKey);
+              const collectionName = ownedTokenIds.length ? await getCollectionName(col) : "";
 
               for (const tokenId of ownedTokenIds) {
                 const claimed = await vault.isTokenClaimed(dropId, col, tokenId);
@@ -579,6 +912,7 @@
                     payoutFormatted: payoutUnits,
                     rawPayout: d.amountPerNFT,
                     collection: col,
+                    collectionName,
                     tokenId: tokenId,
                     expiresAt: expiresAt
                   });
@@ -615,7 +949,7 @@
                 <span class="claim-card-badge">Drop #${item.dropId} Available</span>
                 <div class="claim-amount">${parseFloat(item.payoutFormatted).toFixed(2)} <span>${item.tokenSymbol}</span></div>
                 <div class="claim-sub">
-                  Gate: King Midas • Token ID: <strong>#${item.tokenId}</strong><br>
+                  Gate: ${escHtml(item.collectionName)} • Token ID: <strong>#${item.tokenId}</strong><br>
                   Contract: ${item.tokenAddress.slice(0,6)}...${item.tokenAddress.slice(-4)}<br>
                   Expires in: ${daysLeft}d ${hoursLeft}h
                 </div>
@@ -649,7 +983,7 @@
 
         const receipt = await tx.wait();
         if (receipt.status === 1) {
-          showStatus('success', `🎉 Successfully claimed ${item.payoutFormatted} ${item.tokenSymbol} for King Midas #${item.tokenId}!`, tx.hash);
+          showStatus('success', `🎉 Successfully claimed ${item.payoutFormatted} ${item.tokenSymbol} for ${escHtml(item.collectionName)} #${item.tokenId}!`, tx.hash);
           scanAllDropsForWallet();
         } else {
           showStatus('error', 'Claim transaction reverted on chain.', tx.hash);
@@ -708,24 +1042,32 @@
 
         const signer = await getSigner();
         const user = await signer.getAddress();
-        const dropId = parseInt(document.getElementById('claimDropId').value) || 2;
+        const dropId = parseInt(document.getElementById('claimDropId').value);
         const tokenId = parseInt(document.getElementById('claimTokenId').value);
 
-        if (isNaN(tokenId)) throw new Error("Please enter a numeric NFT Token ID.");
+        if (!dropId || dropId < 1) throw new Error("Please enter the Drop ID.");
+        if (isNaN(tokenId) || tokenId < 0) throw new Error("Please enter a numeric NFT Token ID.");
 
         const vaultContract = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, signer);
-        const collections = await vaultContract.getDropCollections(dropId);
-        const col = collections[0] || "0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7";
+        const vaultRead = new ethers.Contract(VAULT_ADDRESS, VAULT_ABI, readProvider());
+        const collections = await vaultRead.getDropCollections(dropId);
+        if (!collections || collections.length === 0) throw new Error(`Drop #${dropId} was not found or has no eligible collections.`);
 
-        const alreadyClaimed = await vaultContract.isTokenClaimed(dropId, col, tokenId);
-        if (alreadyClaimed) {
-          throw new Error(`Token #${tokenId} has ALREADY claimed rewards for Drop #${dropId}.`);
+        // Find which of this drop's collections the connected wallet owns this token ID in.
+        let col = null;
+        for (const c of collections) {
+          try {
+            const owner = await withRpc(p => new ethers.Contract(c, ERC721_ABI, p).ownerOf(tokenId));
+            if (owner.toLowerCase() === user.toLowerCase()) { col = c; break; }
+          } catch (_) {}
+        }
+        if (!col) {
+          throw new Error(`Connected wallet does not own Token #${tokenId} in any collection eligible for Drop #${dropId}.`);
         }
 
-        const nftContract = new ethers.Contract(col, ERC721_ABI, signer);
-        const actualOwner = await nftContract.ownerOf(tokenId);
-        if (actualOwner.toLowerCase() !== user.toLowerCase()) {
-          throw new Error(`Connected wallet does not own Token #${tokenId}. Actual owner: ${actualOwner.slice(0,6)}...`);
+        const alreadyClaimed = await vaultRead.isTokenClaimed(dropId, col, tokenId);
+        if (alreadyClaimed) {
+          throw new Error(`Token #${tokenId} has already claimed rewards for Drop #${dropId}.`);
         }
 
         btn.innerText = "Confirm in Wallet...";
@@ -815,9 +1157,13 @@
         const totalAmtStr = document.getElementById('totalAmount').value.trim() || "10000";
         const durationSec = parseInt(document.getElementById('duration').value.trim()) || 604800;
         const treasuryAddr = document.getElementById('treasury').value.trim() || TREASURY_ADDRESS;
-        const supply = getSelectedSupply();
 
-        if (supply === 0) throw new Error("Total eligible NFTs cannot be 0.");
+        // Re-check the live gate list and supplies right before sending, so the
+        // transaction always matches what is shown on screen.
+        btn.innerText = "Checking gate...";
+        await verifyGatesBeforeFunding();
+        const supply = getSelectedSupply();
+        if (!supply) throw new Error("Total eligible NFTs cannot be 0.");
 
         const tokenContract = new ethers.Contract(tokenAddr, ERC20_ABI, signer);
         let decimals = 18;
@@ -835,15 +1181,15 @@
         btn.innerText = "Confirm in Wallet...";
         showStatus('info', `Please confirm the Fund Drop escrow transaction for ${totalAmtStr} tokens across ${supply.toLocaleString()} NFTs in your wallet...`);
 
-        const selGates = availableGates.filter(g => g.selected);
+        const selGates = getSplitGates();
         let tx;
-        if (selGates.length === 1 && selGates[0].collection.toLowerCase() === "0x3bc52b9835e6ed74d562ed2df42755aa7c27e8b7") {
+        if (selGates.length === availableGates.length) {
+          // Every active gate contract: the vault snapshots the registry's active list itself.
           tx = await vaultContract.fundDropWithMidasGate(tokenAddr, requiredUnits, supply, durationSec, treasuryAddr);
-        } else if (selGates.length > 0) {
+        } else {
+          // A subset the creator isolated: pass exactly those contracts.
           const colAddrs = selGates.map(g => g.collection);
           tx = await vaultContract.fundDropCustom(tokenAddr, requiredUnits, colAddrs, supply, durationSec, treasuryAddr);
-        } else {
-          tx = await vaultContract.fundDropWithMidasGate(tokenAddr, requiredUnits, supply, durationSec, treasuryAddr);
         }
 
         showStatus('info', 'Fund drop transaction broadcast! Waiting for confirmation on Base...', tx.hash);
@@ -862,6 +1208,7 @@
         btn.innerText = "Step 2: Fund Drop Escrow";
       } finally {
         btn.disabled = false;
+        updatePreview();
       }
     }
 
@@ -905,16 +1252,79 @@
 
     function renderGateCards() {
       const grid = document.getElementById('gateGrid');
+      const dot = document.getElementById('gateDot');
+      const statusText = document.getElementById('gateStatusText');
       if (!grid) return;
-      grid.innerHTML = availableGates.map((g, idx) => `
-        <div class="nft-card ${g.selected ? 'selected' : ''}" id="card-${idx}" onclick="toggleCard(${idx})">
+
+      if (gateLoad.state === 'loading') {
+        if (dot) dot.className = 'status-dot loading';
+        if (statusText) statusText.textContent = 'Midas Gate Registry: reading active contracts from Base...';
+        grid.innerHTML = `<div class="gate-empty">Reading active gate contracts from the Midas Gate Registry...</div>`;
+        return;
+      }
+      if (gateLoad.state === 'error') {
+        if (dot) dot.className = 'status-dot error';
+        if (statusText) statusText.textContent = 'Midas Gate Registry: could not reach Base';
+        grid.innerHTML = `<div class="gate-empty">Could not read the Midas Gate Registry right now (${escHtml(gateLoad.error)}).<br>Tap Refresh to try again.</div>`;
+        return;
+      }
+      if (gateLoad.state === 'empty') {
+        if (dot) dot.className = 'status-dot empty';
+        if (statusText) statusText.textContent = 'Midas Gate Registry: no active contracts';
+        grid.innerHTML = `<div class="gate-empty"><strong style="color: var(--text-main);">No active Midas Gate contracts</strong><br>The registry has no active NFT contracts right now. Add one in the Midas Gate admin tool, then tap Refresh.</div>`;
+        return;
+      }
+
+      if (dot) dot.className = 'status-dot';
+      if (statusText) statusText.textContent = `Midas Gate Registry: ${availableGates.length} active contract${availableGates.length === 1 ? '' : 's'} (live from Base)`;
+
+      grid.innerHTML = availableGates.map((g, idx) => {
+        const placeholder = placeholderImage(g.name);
+        const srcs = (g.images && g.images.length) ? g.images : [];
+        const first = srcs[0] || placeholder;
+        let supplyText;
+        if (g.metaState === 'loading') supplyText = 'Reading supply...';
+        else if (g.mintedSupply == null) supplyText = 'Supply unavailable';
+        else supplyText = `${g.mintedSupply.toLocaleString()} Minted Token IDs`;
+        let rangeText = '';
+        if (g.startId !== null && g.endId !== null) rangeText = `IDs #${g.startId} to #${g.endId}`;
+        else if (g.startId !== null) rangeText = `IDs start at #${g.startId}`;
+        return `
+        <div class="nft-card ${g.selected ? 'selected' : ''}" id="card-${idx}" onclick="toggleCard(${idx})" title="${escHtml(g.collection)}">
           <span class="badge-check">✓ ACTIVE</span>
-          <img src="${g.image || DEFAULT_GATE_IMAGE}" alt="${g.name}" onerror="this.src='${DEFAULT_GATE_IMAGE}'">
-          <div class="nft-title">${g.name}</div>
-          <div class="nft-sub">${g.collection.slice(0,6)}...${g.collection.slice(-4)}</div>
-          <div class="nft-supply-badge">${(g.mintedSupply || 0).toLocaleString()} Minted Token IDs</div>
-        </div>
-      `).join('');
+          <img src="${escHtml(first)}" alt="${escHtml(g.name)}" data-idx="0" data-srcs="${escHtml(JSON.stringify(srcs))}" data-fallback="${escHtml(placeholder)}" onerror="nextGateImage(this)" onload="gateImageLoaded(this)">
+          <div class="nft-title">${escHtml(g.name)}</div>
+          <div class="nft-sub"><a href="https://basescan.org/address/${escHtml(g.collection)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" style="color: inherit;">${escHtml(shortAddr(g.collection))}</a></div>
+          <div class="nft-supply-badge">${escHtml(supplyText)}</div>
+          ${rangeText ? `<div class="nft-range">${escHtml(rangeText)}</div>` : ''}
+        </div>`;
+      }).join('');
+
+      // If a gateway is slow, move to the next one instead of waiting forever.
+      grid.querySelectorAll('img[data-srcs]').forEach(img => {
+        const srcs = JSON.parse(img.dataset.srcs || '[]');
+        if (srcs.length > 1) {
+          img._gateTimer = setTimeout(() => { if (!img.complete || !img.naturalWidth) nextGateImage(img); }, 8000);
+        }
+      });
+    }
+
+    function nextGateImage(img) {
+      if (img._gateTimer) clearTimeout(img._gateTimer);
+      const srcs = JSON.parse(img.dataset.srcs || '[]');
+      const next = Number(img.dataset.idx || 0) + 1;
+      if (next < srcs.length) {
+        img.dataset.idx = String(next);
+        img.src = srcs[next];
+        img._gateTimer = setTimeout(() => { if (!img.complete || !img.naturalWidth) nextGateImage(img); }, 8000);
+      } else if (img.src !== img.dataset.fallback) {
+        img.onerror = null;
+        img.src = img.dataset.fallback;
+      }
+    }
+
+    function gateImageLoaded(img) {
+      if (img._gateTimer) clearTimeout(img._gateTimer);
     }
 
     function setToken(addr) {
@@ -955,31 +1365,69 @@
     }
 
     function resetGateSelection() {
-      availableGates.forEach((g, idx) => {
-        g.selected = true;
-        const card = document.getElementById('card-' + idx);
-        if (card) card.classList.add('selected');
-      });
-      updatePreview();
+      selectAllGates();
     }
 
+    // Total token IDs the split covers, or null while a supply is still loading or unreadable.
     function getSelectedSupply() {
-      const sel = availableGates.filter(g => g.selected);
-      if (sel.length === 0) return availableGates.reduce((acc, g) => acc + g.mintedSupply, 0);
-      return sel.reduce((acc, g) => acc + g.mintedSupply, 0);
+      const split = getSplitGates();
+      if (split.some(g => g.mintedSupply == null)) return null;
+      return split.reduce((acc, g) => acc + g.mintedSupply, 0);
     }
 
     function updatePreview() {
-      const totalAmt = parseFloat(document.getElementById('totalAmount').value) || 0;
-      const supply = getSelectedSupply();
-      const selCount = availableGates.filter(g => g.selected).length || availableGates.length;
-      const perNFT = supply > 0 ? (totalAmt / supply).toFixed(4) : "0.0000";
+      const splitEl = document.getElementById('splitDisplay');
+      const contractsEl = document.getElementById('previewActiveContracts');
+      const totalEl = document.getElementById('previewTotalNFTs');
+      const perEl = document.getElementById('previewPerNFT');
+      const fundBtn = document.getElementById('btnFund');
+      if (!splitEl) return;
 
-      document.getElementById('splitDisplay').value = `Auto: ${supply.toLocaleString()} Minted NFTs across ${selCount} Active Gate(s)`;
-      const names = availableGates.filter(g => g.selected).map(g => g.name).join(', ') || 'None';
-      document.getElementById('previewActiveContracts').innerText = `${selCount} Contract(s) (${names})`;
-      document.getElementById('previewTotalNFTs').innerText = `${supply.toLocaleString()} Token IDs`;
-      document.getElementById('previewPerNFT').innerText = `${perNFT} Tokens / NFT`;
+      const setAll = (split, contracts, total, per) => {
+        splitEl.value = split;
+        contractsEl.innerText = contracts;
+        totalEl.innerText = total;
+        perEl.innerText = per;
+      };
+
+      if (gateLoad.state === 'loading') {
+        setAll('Reading active gate contracts from Base...', 'Loading...', 'Loading...', 'Loading...');
+        if (fundBtn) fundBtn.disabled = true;
+        return;
+      }
+      if (gateLoad.state === 'error') {
+        setAll('Could not read the Midas Gate Registry', 'Unavailable', 'Unavailable', 'Unavailable');
+        if (fundBtn) fundBtn.disabled = true;
+        return;
+      }
+      if (gateLoad.state === 'empty') {
+        setAll('No active gate contracts', '0 Contracts', '0 Token IDs', 'Nothing to split');
+        if (fundBtn) fundBtn.disabled = true;
+        return;
+      }
+
+      const totalAmt = parseFloat(document.getElementById('totalAmount').value) || 0;
+      const split = getSplitGates();
+      const supply = getSelectedSupply();
+      const names = split.map(g => g.name).join(', ');
+      const contractsText = `${split.length} Contract${split.length === 1 ? '' : 's'} (${names})`;
+
+      if (supply == null) {
+        const loading = split.some(g => g.metaState === 'loading');
+        const msg = loading ? 'Reading supply...' : 'Supply unavailable';
+        setAll(`${msg} across ${split.length} Active Gate${split.length === 1 ? '' : 's'}`, contractsText, msg, msg);
+        if (fundBtn) fundBtn.disabled = true;
+        return;
+      }
+
+      const perNFT = supply > 0 ? (totalAmt / supply).toFixed(4) : "0.0000";
+      setAll(
+        `Auto: ${supply.toLocaleString()} Minted NFTs across ${split.length} Active Gate${split.length === 1 ? '' : 's'}`,
+        contractsText,
+        `${supply.toLocaleString()} Token IDs`,
+        `${perNFT} Tokens / NFT`
+      );
+      if (fundBtn) fundBtn.disabled = supply === 0;
     }
 
 
@@ -994,7 +1442,7 @@
     }
 
     function readProvider() {
-      return new ethers.JsonRpcProvider("https://mainnet.base.org", 8453, { staticNetwork: true });
+      return rpcProvider(BASE_RPCS[preferredRpc]);
     }
 
     async function getTokenMeta(tokenAddr, provider) {
@@ -1242,6 +1690,7 @@
 
     renderGateCards();
     updatePreview();
+    loadGates();
   </script>
 </body>
 </html>
