@@ -813,6 +813,7 @@
     }
 
     async function ensureBaseNetwork(eth) {
+      // Only call after eth_requestAccounts (or eth_accounts already returned an address).
       const provider = eth || await getWalletProvider();
       if (!provider) throw new Error('No wallet available. Tap Connect wallet to open Coinbase Smart Wallet.');
       const currentChainId = await provider.request({ method: 'eth_chainId' });
@@ -843,14 +844,15 @@
 
     async function getSigner() {
       const eth = await getWalletProvider();
-      await ensureBaseNetwork(eth);
-      const provider = new ethers.BrowserProvider(eth);
-      const accounts = await provider.send('eth_requestAccounts', []);
+      // Coinbase Smart Wallet: eth_requestAccounts must be first; never chain/balance before it.
+      const accounts = await eth.request({ method: 'eth_requestAccounts' });
       if (!accounts || accounts.length === 0) throw new Error('Wallet not connected.');
       userAddress = accounts[0];
       rememberWallet(true);
       renderWalletButton(false);
       wireProviderEvents(eth);
+      await ensureBaseNetwork(eth);
+      const provider = new ethers.BrowserProvider(eth);
       return await provider.getSigner();
     }
 
@@ -880,13 +882,14 @@
         renderWalletButton(true);
         showStatus('info', 'Connecting wallet...');
         const eth = await getWalletProvider();
-        await ensureBaseNetwork(eth);
+        // Coinbase Smart Wallet: request accounts first, then switch/add Base. Never preflight chain.
         const accounts = await eth.request({ method: 'eth_requestAccounts' });
         if (!accounts || accounts.length === 0) throw new Error('Wallet not connected.');
         userAddress = accounts[0];
         rememberWallet(true);
-        renderWalletButton(false);
         wireProviderEvents(eth);
+        await ensureBaseNetwork(eth);
+        renderWalletButton(false);
         showStatus('success', 'Connected: ' + userAddress + ' on Base Mainnet');
         scanAllDropsForWallet();
       } catch (e) {
