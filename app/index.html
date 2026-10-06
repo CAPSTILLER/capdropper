@@ -101,7 +101,21 @@
 
     .preview-box { background: #0d101a; border: 1px dashed var(--gold-primary); padding: 18px; border-radius: 10px; margin-bottom: 20px; }
     .preview-box h4 { color: var(--gold-bright); margin-bottom: 12px; font-size: 15px; }
-    .preview-stat { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; font-family: var(--font-mono); }
+    .preview-stat { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; margin-bottom: 8px; font-family: var(--font-mono); line-height: 1.35; }
+    .preview-label { flex: 0 0 auto; white-space: nowrap; color: var(--text-muted); }
+    .preview-value { flex: 1 1 auto; min-width: 0; text-align: right; }
+    .preview-value.addr {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      color: var(--gold-bright); background: none; border: none; padding: 0;
+      font: inherit; cursor: pointer; text-align: right;
+    }
+    .preview-value.addr:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; border-radius: 4px; }
+    .preview-value.addr:active { opacity: 0.75; }
+    .preview-value.wrap { white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+    @media (max-width: 420px) {
+      .preview-stat.stack-narrow { flex-direction: column; align-items: flex-start; gap: 2px; }
+      .preview-stat.stack-narrow .preview-value { text-align: left; }
+    }
 
     /* Claim Cards & Scanner */
     .scanner-bar { background: #0e121e; border: 1px solid #23293d; border-radius: 10px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
@@ -209,28 +223,28 @@
       <div class="preview-box">
         <h4>Telemetry & Distribution Breakdown</h4>
         <div class="preview-stat">
-          <span>Escrow Vault:</span>
-          <span>0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7</span>
+          <span class="preview-label">Escrow Vault:</span>
+          <button type="button" class="preview-value addr" title="0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7" data-address="0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7" onclick="copyContractAddress(this)" aria-label="Copy Escrow Vault address">0x17Db…b9F7</button>
         </div>
         <div class="preview-stat">
-          <span>Midas Gate Registry:</span>
-          <span>0x54C3C8C9E2180c6b90652983d1c15cF933f1a263</span>
+          <span class="preview-label">Midas Gate Registry:</span>
+          <button type="button" class="preview-value addr" title="0x54C3C8C9E2180c6b90652983d1c15cF933f1a263" data-address="0x54C3C8C9E2180c6b90652983d1c15cF933f1a263" onclick="copyContractAddress(this)" aria-label="Copy Midas Gate Registry address">0x54C3…a263</button>
         </div>
         <div class="preview-stat">
-          <span>Active Gate Contracts Counted:</span>
-          <span id="previewActiveContracts" style="color: var(--gold-bright);">Loading...</span>
+          <span class="preview-label">Active Gate Contracts Counted:</span>
+          <span id="previewActiveContracts" class="preview-value" style="color: var(--gold-bright);">Loading...</span>
         </div>
         <div class="preview-stat">
-          <span>Total Minted Token IDs for Split:</span>
-          <strong id="previewTotalNFTs" style="color: var(--gold-bright);">Loading...</strong>
+          <span class="preview-label">Total Minted Token IDs for Split:</span>
+          <strong id="previewTotalNFTs" class="preview-value" style="color: var(--gold-bright);">Loading...</strong>
         </div>
         <div class="preview-stat">
-          <span>Even Payout Per NFT:</span>
-          <strong id="previewPerNFT" style="color: var(--gold-bright); font-size: 15px;">Loading...</strong>
+          <span class="preview-label">Even Payout Per NFT:</span>
+          <strong id="previewPerNFT" class="preview-value" style="color: var(--gold-bright); font-size: 15px;">Loading...</strong>
         </div>
-        <div class="preview-stat">
-          <span>Expiration Settlement:</span>
-          <span>90% Creator Refund / 10% to Protocol Treasury (0xA125...793)</span>
+        <div class="preview-stat stack-narrow">
+          <span class="preview-label">Expiration Settlement:</span>
+          <span class="preview-value wrap">90% Creator Refund / 10% to Protocol Treasury (0xA125…793)</span>
         </div>
       </div>
 
@@ -719,6 +733,32 @@
 
     function shortAddress(a) {
       return a.slice(0, 6) + '…' + a.slice(-4);
+    }
+
+    async function copyContractAddress(el) {
+      const addr = (el && el.dataset && el.dataset.address) || (el && el.title) || '';
+      if (!addr) return;
+      try {
+        await navigator.clipboard.writeText(addr);
+        const prev = el.textContent;
+        el.textContent = 'Copied';
+        setTimeout(() => { el.textContent = prev; }, 1200);
+      } catch (_) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = addr;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          const prev = el.textContent;
+          el.textContent = 'Copied';
+          setTimeout(() => { el.textContent = prev; }, 1200);
+        } catch (__) { /* clipboard blocked */ }
+      }
     }
 
     function hasInjectedEthereum() {
