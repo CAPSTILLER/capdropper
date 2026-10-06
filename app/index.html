@@ -27,7 +27,24 @@
     .brand { display: flex; align-items: center; gap: 12px; }
     .brand h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(135deg, #fff 20%, var(--gold-bright) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .tag { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--gold-primary); color: var(--gold-bright); padding: 3px 8px; border-radius: 999px; font-size: 11px; font-family: var(--font-mono); text-transform: uppercase; }
-    .wallet-status { display: flex; align-items: center; gap: 12px; }
+    .wallet-status { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+    /* Cap standard wallet toggle: white + blue text disconnected; solid blue + white text connected. */
+    .walletbtn {
+      font: 700 13px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      letter-spacing: 0.02em;
+      border: 2px solid #2563eb;
+      border-radius: 999px;
+      padding: 9px 16px;
+      cursor: pointer;
+      background: #ffffff;
+      color: #2563eb;
+      white-space: nowrap;
+      transition: box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .walletbtn:hover { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.33); }
+    .walletbtn:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+    .walletbtn.connected { background: #2563eb; color: #ffffff; }
+    .walletbtn:disabled { opacity: 0.7; cursor: progress; }
     .btn { background: linear-gradient(135deg, #d97706, #f59e0b); color: #000; font-weight: 700; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s ease; font-size: 13px; }
     .btn:hover { box-shadow: 0 0 15px var(--gold-glow); transform: translateY(-1px); }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
@@ -108,7 +125,7 @@
       </div>
       <div class="wallet-status">
         <span class="tag" style="border-color: #374151; color: var(--text-muted);">Vault: 0x17Db...b9F7</span>
-        <button id="btnConnect" class="btn" onclick="connectWallet()">Connect Wallet</button>
+        <button type="button" id="btnConnect" class="walletbtn" onclick="connectWallet()" aria-pressed="false" aria-label="Connect wallet" title="Tap to connect your wallet">Connect wallet</button>
       </div>
     </header>
 
@@ -693,18 +710,121 @@
       if (b) b.style.display = 'none';
     }
 
-    async function ensureBaseNetwork() {
-      if (!window.ethereum) throw new Error("No EVM wallet detected. Open in MetaMask, Rabby, or Coinbase Wallet.");
-      const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+    // Cap standard wallet: injected ethereum when present (in-app browser), else Coinbase Smart Wallet SDK for phone/desktop browsers with no extension.
+    const REMEMBER_KEY = 'capdropper.wallet.connected';
+    const CB_SDK_URL = 'https://cdn.jsdelivr.net/npm/@coinbase/wallet-sdk@4.4.0/+esm';
+    let activeProvider = null;
+    let cbSdkProvider = null;
+    let providerEventsWired = false;
+
+    function shortAddress(a) {
+      return a.slice(0, 6) + '…' + a.slice(-4);
+    }
+
+    function hasInjectedEthereum() {
+      return !!(window.ethereum && typeof window.ethereum.request === 'function');
+    }
+
+    function rememberWallet(on) {
+      try {
+        if (on) localStorage.setItem(REMEMBER_KEY, '1');
+        else localStorage.removeItem(REMEMBER_KEY);
+      } catch (_) { /* storage blocked */ }
+    }
+
+    function walletRemembered() {
+      try { return localStorage.getItem(REMEMBER_KEY) === '1'; } catch (_) { return false; }
+    }
+
+    function renderWalletButton(busy) {
+      const btn = document.getElementById('btnConnect');
+      if (!btn) return;
+      if (busy) {
+        btn.textContent = 'Connecting…';
+        btn.classList.remove('connected');
+        btn.disabled = true;
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', 'Connecting wallet');
+        btn.title = 'Check your wallet';
+        return;
+      }
+      btn.disabled = false;
+      if (userAddress) {
+        const label = 'Connected ' + shortAddress(userAddress);
+        btn.textContent = label;
+        btn.classList.add('connected');
+        btn.setAttribute('aria-pressed', 'true');
+        btn.setAttribute('aria-label', label + '. Tap to disconnect.');
+        btn.title = 'Tap to disconnect';
+      } else {
+        btn.textContent = 'Connect wallet';
+        btn.classList.remove('connected');
+        btn.setAttribute('aria-pressed', 'false');
+        btn.setAttribute('aria-label', 'Connect wallet');
+        btn.title = 'Tap to connect your wallet';
+      }
+    }
+
+    async function getCoinbaseSmartProvider() {
+      if (cbSdkProvider) return cbSdkProvider;
+      const mod = await import(CB_SDK_URL);
+      const create = mod.createCoinbaseWalletSDK || (mod.default && mod.default.createCoinbaseWalletSDK);
+      if (!create) throw new Error('Coinbase Wallet SDK failed to load. Check your connection and try again.');
+      const sdk = create({
+        appName: 'CAPdropper',
+        appLogoUrl: 'https://gearup.wtf/favicon.ico',
+        appChainIds: [8453],
+        preference: { options: 'smartWalletOnly' }
+      });
+      cbSdkProvider = sdk.getProvider();
+      return cbSdkProvider;
+    }
+
+    async function getWalletProvider() {
+      if (hasInjectedEthereum()) {
+        activeProvider = window.ethereum;
+        return activeProvider;
+      }
+      activeProvider = await getCoinbaseSmartProvider();
+      return activeProvider;
+    }
+
+    function wireProviderEvents(eth) {
+      if (!eth || providerEventsWired || typeof eth.on !== 'function') return;
+      providerEventsWired = true;
+      eth.on('accountsChanged', (accs) => {
+        const list = accs || [];
+        if (!list[0]) {
+          rememberWallet(false);
+          userAddress = null;
+          renderWalletButton(false);
+        } else if (userAddress) {
+          userAddress = list[0];
+          renderWalletButton(false);
+          scanAllDropsForWallet();
+        }
+      });
+      eth.on('chainChanged', () => { /* Base switch handled on next action */ });
+      eth.on('disconnect', () => {
+        rememberWallet(false);
+        userAddress = null;
+        renderWalletButton(false);
+      });
+    }
+
+    async function ensureBaseNetwork(eth) {
+      const provider = eth || await getWalletProvider();
+      if (!provider) throw new Error('No wallet available. Tap Connect wallet to open Coinbase Smart Wallet.');
+      const currentChainId = await provider.request({ method: 'eth_chainId' });
       if (currentChainId !== BASE_CHAIN_ID_HEX && parseInt(currentChainId, 16) !== 8453) {
         try {
-          await window.ethereum.request({
+          await provider.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: BASE_CHAIN_ID_HEX }]
           });
         } catch (err) {
           if (err.code === 4902) {
-            await window.ethereum.request({
+            await provider.request({
               method: 'wallet_addEthereumChain',
               params: [{
                 chainId: BASE_CHAIN_ID_HEX,
@@ -722,28 +842,59 @@
     }
 
     async function getSigner() {
-      if (!window.ethereum) {
-        throw new Error("No Web3 wallet found. Please install MetaMask, Coinbase Wallet, or Rabby.");
-      }
-      await ensureBaseNetwork();
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const accounts = await provider.send("eth_requestAccounts", []);
-      if (!accounts || accounts.length === 0) throw new Error("Wallet not connected.");
+      const eth = await getWalletProvider();
+      await ensureBaseNetwork(eth);
+      const provider = new ethers.BrowserProvider(eth);
+      const accounts = await provider.send('eth_requestAccounts', []);
+      if (!accounts || accounts.length === 0) throw new Error('Wallet not connected.');
       userAddress = accounts[0];
-      const btn = document.getElementById('btnConnect');
-      if (btn) btn.innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
+      rememberWallet(true);
+      renderWalletButton(false);
+      wireProviderEvents(eth);
       return await provider.getSigner();
     }
 
+    async function disconnectWallet() {
+      rememberWallet(false);
+      userAddress = null;
+      renderWalletButton(false);
+      const eth = activeProvider || (hasInjectedEthereum() ? window.ethereum : cbSdkProvider);
+      if (eth) {
+        try {
+          await eth.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] });
+        } catch (_) { /* not every wallet supports revoke */ }
+        try {
+          if (typeof eth.disconnect === 'function') await eth.disconnect();
+        } catch (_) { /* optional */ }
+      }
+      showStatus('info', 'Wallet disconnected.');
+    }
+
     async function connectWallet() {
+      if (userAddress) {
+        await disconnectWallet();
+        return;
+      }
       try {
         clearStatus();
+        renderWalletButton(true);
         showStatus('info', 'Connecting wallet...');
-        const signer = await getSigner();
-        const addr = await signer.getAddress();
-        showStatus('success', `Connected: ${addr} on Base Mainnet`);
+        const eth = await getWalletProvider();
+        await ensureBaseNetwork(eth);
+        const accounts = await eth.request({ method: 'eth_requestAccounts' });
+        if (!accounts || accounts.length === 0) throw new Error('Wallet not connected.');
+        userAddress = accounts[0];
+        rememberWallet(true);
+        renderWalletButton(false);
+        wireProviderEvents(eth);
+        showStatus('success', 'Connected: ' + userAddress + ' on Base Mainnet');
         scanAllDropsForWallet();
       } catch (e) {
+        renderWalletButton(false);
+        if (e && (e.code === 4001 || e.code === 'ACTION_REJECTED')) {
+          showStatus('info', 'You closed the wallet prompt. Nothing was connected.');
+          return;
+        }
         showStatus('error', 'Connection failed: ' + (e.reason || e.message || e));
       }
     }
@@ -841,12 +992,16 @@
 
       try {
         if (!userAddress) {
-          if (window.ethereum) {
-            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-            if (accounts && accounts.length > 0) {
-              userAddress = accounts[0];
+          try {
+            const eth = activeProvider || (hasInjectedEthereum() ? window.ethereum : null);
+            if (eth) {
+              const accounts = await eth.request({ method: 'eth_accounts' });
+              if (accounts && accounts.length > 0) {
+                userAddress = accounts[0];
+                renderWalletButton(false);
+              }
             }
-          }
+          } catch (_) { /* ignore */ }
         }
 
         if (!userAddress) {
@@ -1490,12 +1645,17 @@
 
     async function getConnectedAddress() {
       if (userAddress) return userAddress;
-      if (window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts && accounts.length > 0) { userAddress = accounts[0]; return userAddress; }
-        } catch (e) {}
-      }
+      try {
+        const eth = activeProvider || (hasInjectedEthereum() ? window.ethereum : null);
+        if (eth) {
+          const accounts = await eth.request({ method: 'eth_accounts' });
+          if (accounts && accounts.length > 0) {
+            userAddress = accounts[0];
+            renderWalletButton(false);
+            return userAddress;
+          }
+        }
+      } catch (e) {}
       return null;
     }
 
@@ -1676,18 +1836,35 @@
       }
     }
 
-    // Auto-detect injected wallet if already authorized
-    if (window.ethereum) {
-      window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
-        if (accounts && accounts.length > 0) {
-          userAddress = accounts[0];
-          const btn = document.getElementById('btnConnect');
-          if (btn) btn.innerText = userAddress.slice(0,6) + "..." + userAddress.slice(-4);
-          scanAllDropsForWallet();
+    async function initWalletFromMemory() {
+      renderWalletButton(false);
+      if (!walletRemembered()) return;
+      try {
+        let eth = null;
+        if (hasInjectedEthereum()) {
+          eth = window.ethereum;
+        } else {
+          // Silent restore for Smart Wallet sessions only (eth_accounts should not open a popup).
+          eth = await getCoinbaseSmartProvider();
         }
-      }).catch(() => {});
+        activeProvider = eth;
+        const accounts = await eth.request({ method: 'eth_accounts' });
+        if (accounts && accounts[0]) {
+          userAddress = accounts[0];
+          renderWalletButton(false);
+          wireProviderEvents(eth);
+          scanAllDropsForWallet();
+        } else {
+          rememberWallet(false);
+        }
+      } catch (_) {
+        rememberWallet(false);
+        renderWalletButton(false);
+      }
     }
 
+    renderWalletButton(false);
+    initWalletFromMemory();
     renderGateCards();
     updatePreview();
     loadGates();
