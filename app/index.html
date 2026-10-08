@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CAPdropper Terminal — Midas Gate Airdrop Portal</title>
+  <title>CAPdropper Terminal</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <style>
     :root {
@@ -53,9 +53,47 @@
     .btn-small { padding: 6px 12px; font-size: 12px; }
     .btn-success { background: linear-gradient(135deg, #059669, #10b981); color: #fff; }
 
-    .gate-banner { background: rgba(26, 20, 8, 0.7); border: 1px solid #78350f; border-radius: 12px; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
-    .gate-indicator { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 13px; }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
+
+    .site-footer {
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .footer-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 8px;
+      border: 1px solid #3b3524;
+      background: #1f2937;
+      color: var(--gold-bright);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      font-family: var(--font-mono);
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .footer-btn:hover { background: #374151; border-color: var(--gold-primary); }
+    .footer-gear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 32px;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+    .footer-gear:hover { opacity: 0.85; }
+    .footer-gear:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+    .footer-gear img { height: 28px; width: auto; display: block; }
 
     /* Transaction Banner */
     .tx-banner { margin-bottom: 20px; padding: 14px 18px; border-radius: 10px; font-size: 13px; font-family: var(--font-mono); line-height: 1.5; word-break: break-all; }
@@ -143,16 +181,6 @@
       </div>
     </header>
 
-    <div class="gate-banner">
-      <div class="gate-indicator">
-        <div id="gateDot" class="status-dot loading"></div>
-        <span id="gateStatusText">Midas Gate Registry: reading active contracts from Base...</span>
-      </div>
-      <div style="font-family: var(--font-mono); font-size: 12px; color: var(--gold-bright);">
-        Registry: 0x54C3C8C9E2180c6b90652983d1c15cF933f1a263
-      </div>
-    </div>
-
     <!-- LIVE STATUS BANNER -->
     <div id="txBanner" class="tx-banner" style="display: none;"></div>
 
@@ -195,8 +223,8 @@
       <div id="gateChooserWrap" class="gate-selector-wrap" style="display: none;">
         <div class="selector-head">
           <div>
-            <strong style="color: var(--gold-bright); font-size: 14px;">Active Midas Gate Contracts & Token Supplies</strong>
-            <p style="font-size: 12px; color: var(--text-muted);">Read live from the Midas Gate Registry on Base every time this page loads. Tap a contract card to isolate selection. If no card is chosen, drop splits evenly across all active gate token IDs.</p>
+            <strong style="color: var(--gold-bright); font-size: 14px;">Active Gate Contracts & Token Supplies</strong>
+            <p style="font-size: 12px; color: var(--text-muted);">Active NFT contracts for this drop, read live from Base. Tap a contract card to isolate selection. If no card is chosen, drop splits evenly across all active gate token IDs.</p>
           </div>
           <div style="display: flex; gap: 8px;">
             <button class="btn btn-secondary btn-small" onclick="loadGates()">Refresh</button>
@@ -205,7 +233,7 @@
           </div>
         </div>
         <div id="gateGrid" class="gate-grid">
-          <div class="gate-empty">Reading active gate contracts from the Midas Gate Registry...</div>
+          <div class="gate-empty">Reading active gate contracts from Base...</div>
         </div>
       </div>
 
@@ -225,10 +253,6 @@
         <div class="preview-stat">
           <span class="preview-label">Escrow Vault:</span>
           <button type="button" class="preview-value addr" title="0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7" data-address="0x17Db8FaD0154c64bbc0D8154556291c11D16b9F7" onclick="copyContractAddress(this)" aria-label="Copy Escrow Vault address">0x17Db…b9F7</button>
-        </div>
-        <div class="preview-stat">
-          <span class="preview-label">Midas Gate Registry:</span>
-          <button type="button" class="preview-value addr" title="0x54C3C8C9E2180c6b90652983d1c15cF933f1a263" data-address="0x54C3C8C9E2180c6b90652983d1c15cF933f1a263" onclick="copyContractAddress(this)" aria-label="Copy Midas Gate Registry address">0x54C3…a263</button>
         </div>
         <div class="preview-stat">
           <span class="preview-label">Active Gate Contracts Counted:</span>
@@ -338,6 +362,13 @@
         </div>
       </div>
     </div>
+
+    <footer class="site-footer" aria-label="Site links">
+      <a class="footer-btn" href="https://midasgate.vercel.app" target="_blank" rel="noopener noreferrer">Midas Gate</a>
+      <a class="footer-gear" href="https://landonthis.gearup.wtf" target="_blank" rel="noopener noreferrer" aria-label="GEAR">
+        <img src="/gear-logo-cutout.png" alt="GEAR" height="28" width="112" />
+      </a>
+    </footer>
   </div>
 
   <script>
@@ -676,16 +707,16 @@
     // Right before funding: make sure the registry still lists exactly the contracts shown,
     // and that minted supplies have not changed. If anything changed, refresh and ask to review.
     async function verifyGatesBeforeFunding() {
-      if (gateLoad.state === 'loading') throw new Error("Still reading the Midas Gate list from Base. Try again in a moment.");
+      if (gateLoad.state === 'loading') throw new Error("Still reading the active gate list from Base. Try again in a moment.");
       const live = await fetchActiveGateList();
       const liveKey = live.map(g => g.collection.toLowerCase()).sort().join(',');
       const shownKey = availableGates.map(g => g.collection.toLowerCase()).sort().join(',');
       if (liveKey !== shownKey) {
         await loadGates();
-        throw new Error("The Midas Gate list changed on Base since this page loaded. The list is now refreshed; review it and tap Fund again.");
+        throw new Error("The active gate list changed on Base since this page loaded. The list is now refreshed; review it and tap Fund again.");
       }
       if (availableGates.length === 0) {
-        throw new Error("There are no active Midas Gate contracts right now, so there is nothing to split across.");
+        throw new Error("There are no active gate contracts right now, so there is nothing to split across.");
       }
       const split = getSplitGates();
       let changed = false;
@@ -1456,25 +1487,25 @@
 
       if (gateLoad.state === 'loading') {
         if (dot) dot.className = 'status-dot loading';
-        if (statusText) statusText.textContent = 'Midas Gate Registry: reading active contracts from Base...';
-        grid.innerHTML = `<div class="gate-empty">Reading active gate contracts from the Midas Gate Registry...</div>`;
+        if (statusText) statusText.textContent = 'Reading active gate contracts from Base...';
+        grid.innerHTML = `<div class="gate-empty">Reading active gate contracts from Base...</div>`;
         return;
       }
       if (gateLoad.state === 'error') {
         if (dot) dot.className = 'status-dot error';
-        if (statusText) statusText.textContent = 'Midas Gate Registry: could not reach Base';
-        grid.innerHTML = `<div class="gate-empty">Could not read the Midas Gate Registry right now (${escHtml(gateLoad.error)}).<br>Tap Refresh to try again.</div>`;
+        if (statusText) statusText.textContent = 'Could not reach Base';
+        grid.innerHTML = `<div class="gate-empty">Could not read active gate contracts right now (${escHtml(gateLoad.error)}).<br>Tap Refresh to try again.</div>`;
         return;
       }
       if (gateLoad.state === 'empty') {
         if (dot) dot.className = 'status-dot empty';
-        if (statusText) statusText.textContent = 'Midas Gate Registry: no active contracts';
-        grid.innerHTML = `<div class="gate-empty"><strong style="color: var(--text-main);">No active Midas Gate contracts</strong><br>The registry has no active NFT contracts right now. Add one in the Midas Gate admin tool, then tap Refresh.</div>`;
+        if (statusText) statusText.textContent = 'No active gate contracts';
+        grid.innerHTML = `<div class="gate-empty"><strong style="color: var(--text-main);">No active gate contracts</strong><br>There are no active NFT contracts right now. Tap Refresh to try again.</div>`;
         return;
       }
 
       if (dot) dot.className = 'status-dot';
-      if (statusText) statusText.textContent = `Midas Gate Registry: ${availableGates.length} active contract${availableGates.length === 1 ? '' : 's'} (live from Base)`;
+      if (statusText) statusText.textContent = `${availableGates.length} active contract${availableGates.length === 1 ? '' : 's'} (live from Base)`;
 
       grid.innerHTML = availableGates.map((g, idx) => {
         const placeholder = placeholderImage(g.name);
@@ -1594,7 +1625,7 @@
         return;
       }
       if (gateLoad.state === 'error') {
-        setAll('Could not read the Midas Gate Registry', 'Unavailable', 'Unavailable', 'Unavailable');
+        setAll('Could not read active gate contracts', 'Unavailable', 'Unavailable', 'Unavailable');
         if (fundBtn) fundBtn.disabled = true;
         return;
       }
