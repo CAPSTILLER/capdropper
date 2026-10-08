@@ -186,6 +186,7 @@
     .claim-card-btn { width: 100%; }
     .empty-claims { text-align: center; padding: 40px 20px; background: #0c0e18; border: 1px dashed #282f44; border-radius: 12px; color: var(--text-muted); }
 
+
     /* ---- Candy Store easter egg (hidden until 5× logo taps) ---- */
     .brand h1 {
       cursor: default;
@@ -197,14 +198,13 @@
     .candy-store {
       position: fixed; inset: 0; z-index: 9999;
       display: none; flex-direction: column;
-      background: linear-gradient(180deg, #fff5f7 0%, #ffe4ec 35%, #f7d9a8 70%, #c49a6c 100%);
+      background: linear-gradient(180deg, #fff5f7 0%, #ffe4ec 28%, #f7d9a8 62%, #c49a6c 100%);
       color: #3b1f14; overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     .candy-store.open { display: flex; }
     .candy-awning {
-      flex: 0 0 auto;
-      height: 54px;
+      flex: 0 0 auto; height: 48px;
       background: repeating-linear-gradient(90deg, #e11d48 0 28px, #fff 28px 56px);
       box-shadow: 0 6px 0 #9f1239, 0 10px 18px rgba(0,0,0,0.18);
       position: relative;
@@ -212,127 +212,196 @@
     .candy-awning::after {
       content: "🍬 Free Samples 🍭";
       position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-      background: #fff8e7; color: #9f1239; font-weight: 800; font-size: 13px;
-      padding: 4px 12px; border-radius: 999px; border: 2px solid #9f1239;
+      background: #fff8e7; color: #9f1239; font-weight: 800; font-size: 12px;
+      padding: 3px 10px; border-radius: 999px; border: 2px solid #9f1239;
       white-space: nowrap; box-shadow: 0 2px 0 #fbcfe8;
     }
     .candy-topbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 14px 6px; gap: 10px;
+      padding: 8px 12px 2px; gap: 8px; flex: 0 0 auto;
     }
     .candy-title {
-      font-weight: 900; font-size: 18px; letter-spacing: -0.3px;
+      font-weight: 900; font-size: 17px; letter-spacing: -0.3px;
       color: #9f1239; text-shadow: 0 1px 0 #fff;
     }
-    .candy-close {
+    .candy-close, .candy-back {
       border: none; background: #9f1239; color: #fff; font-weight: 800;
-      width: 40px; height: 40px; border-radius: 999px; cursor: pointer;
-      font-size: 20px; line-height: 1; box-shadow: 0 3px 0 #7f1d1d;
-      -webkit-tap-highlight-color: transparent;
+      min-width: 40px; height: 40px; border-radius: 999px; cursor: pointer;
+      font-size: 18px; line-height: 1; box-shadow: 0 3px 0 #7f1d1d;
+      -webkit-tap-highlight-color: transparent; padding: 0 12px;
     }
-    .candy-close:active { transform: translateY(1px); box-shadow: 0 2px 0 #7f1d1d; }
+    .candy-close:active, .candy-back:active { transform: translateY(1px); box-shadow: 0 2px 0 #7f1d1d; }
     .candy-sub {
-      padding: 0 14px 8px; font-size: 12px; color: #7c2d12; opacity: 0.9;
+      padding: 0 12px 6px; font-size: 11px; color: #7c2d12; opacity: 0.95; flex: 0 0 auto;
     }
     .candy-shop {
-      flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch;
-      padding: 8px 12px 28px; position: relative;
+      flex: 1 1 auto; min-height: 0; position: relative;
+      display: flex; flex-direction: column; padding: 0 10px 12px;
     }
-    .candy-shelves {
-      position: absolute; inset: 0; pointer-events: none; opacity: 0.35;
-      background:
-        radial-gradient(circle at 12% 18%, #fda4af 0 18px, transparent 19px),
-        radial-gradient(circle at 88% 22%, #a78bfa 0 14px, transparent 15px),
-        radial-gradient(circle at 20% 70%, #67e8f9 0 12px, transparent 13px),
-        radial-gradient(circle at 78% 78%, #fde047 0 16px, transparent 17px),
-        linear-gradient(180deg, transparent 0 22%, #b45309 22% 24%, transparent 24% 48%, #b45309 48% 50%, transparent 50% 74%, #b45309 74% 76%, transparent 76%);
+    .candy-table-view {
+      flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column;
     }
     .candy-table {
-      position: relative; z-index: 1;
-      margin-top: 8px;
-      background: linear-gradient(180deg, #a16207 0%, #854d0e 40%, #713f12 100%);
-      border-radius: 16px 16px 8px 8px;
-      padding: 18px 10px 22px;
+      flex: 1 1 auto; min-height: 0;
+      background: linear-gradient(180deg, #a16207 0%, #854d0e 42%, #713f12 100%);
+      border-radius: 16px 16px 10px 10px;
+      padding: 14px 8px 12px;
       box-shadow: inset 0 8px 0 rgba(255,255,255,0.08), 0 10px 0 #451a03;
-      min-height: 220px;
+      display: flex; flex-direction: column;
+      position: relative;
     }
     .candy-table-top {
-      position: absolute; left: 6%; right: 6%; top: -10px; height: 16px;
+      position: absolute; left: 5%; right: 5%; top: -8px; height: 14px;
       background: linear-gradient(180deg, #d97706, #b45309);
-      border-radius: 8px; box-shadow: 0 2px 0 #78350f;
+      border-radius: 8px; box-shadow: 0 2px 0 #78350f; pointer-events: none;
     }
-    .candy-bowls {
-      display: flex; flex-wrap: wrap; gap: 16px 12px; justify-content: center;
+    .candy-jars {
+      flex: 1 1 auto; min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: repeat(5, minmax(0, 1fr));
+      gap: 8px 10px;
       position: relative; z-index: 1;
+      align-content: stretch;
     }
-    .candy-bowl-wrap {
-      width: min(168px, 44vw);
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
+    .candy-jar-wrap {
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      gap: 3px; min-height: 0; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      border: none; background: transparent; padding: 0; color: inherit;
     }
+    .candy-jar-wrap:focus-visible { outline: 2px solid #fff7ed; outline-offset: 2px; border-radius: 10px; }
+    .candy-jar-wrap.empty { cursor: default; opacity: 0.78; }
     .candy-tag {
       background: #fffbeb; border: 1px dashed #b45309; color: #78350f;
-      font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px;
+      font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 4px;
       transform: rotate(-2deg); box-shadow: 1px 1px 0 #fde68a;
+      line-height: 1.2;
     }
-    .candy-bowl {
-      width: 100%; aspect-ratio: 1.15 / 1;
+    .candy-jar {
+      width: min(100%, 150px); flex: 1 1 auto; min-height: 64px; max-height: 120px;
+      aspect-ratio: 1.05 / 1;
       position: relative;
       background:
-        radial-gradient(ellipse 70% 35% at 50% 22%, rgba(255,255,255,0.55), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(191,219,254,0.25) 40%, rgba(148,163,184,0.35) 100%);
-      border: 3px solid rgba(255,255,255,0.65);
-      border-radius: 50% 50% 46% 46% / 38% 38% 62% 62%;
+        radial-gradient(ellipse 70% 32% at 50% 18%, rgba(255,255,255,0.55), transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,0.38) 0%, rgba(191,219,254,0.22) 42%, rgba(148,163,184,0.34) 100%);
+      border: 3px solid rgba(255,255,255,0.7);
+      border-radius: 50% 50% 46% 46% / 40% 40% 60% 60%;
       box-shadow:
-        inset 0 -18px 24px rgba(15,23,42,0.18),
-        inset 0 8px 10px rgba(255,255,255,0.45),
-        0 8px 0 rgba(69,26,3,0.35);
+        inset 0 -14px 20px rgba(15,23,42,0.18),
+        inset 0 7px 9px rgba(255,255,255,0.4),
+        0 5px 0 rgba(69,26,3,0.35);
       overflow: hidden;
     }
-    .candy-pile {
-      position: absolute; left: 8%; right: 8%; bottom: 10%; top: 18%;
-      display: flex; flex-wrap: wrap; align-content: flex-end; justify-content: center;
-      gap: 3px; padding: 4px;
+    .candy-jar-wrap.empty .candy-jar {
+      background:
+        radial-gradient(ellipse 70% 32% at 50% 18%, rgba(255,255,255,0.35), transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(203,213,225,0.2) 100%);
+      border-color: rgba(255,255,255,0.4);
     }
-    .candy {
-      width: 34px; height: 34px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.85);
-      box-shadow: inset 0 -4px 6px rgba(0,0,0,0.25), 0 2px 2px rgba(0,0,0,0.2);
+    .candy-float-stage {
+      position: absolute; left: 14%; right: 14%; top: 20%; bottom: 14%;
+      overflow: hidden; pointer-events: none;
+    }
+    .candy-float {
+      position: absolute; width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.9);
+      box-shadow: inset 0 -3px 5px rgba(0,0,0,0.25), 0 1px 2px rgba(0,0,0,0.2);
       background-size: cover; background-position: center;
-      cursor: pointer; flex: 0 0 auto;
-      animation: candy-wobble 3.6s ease-in-out infinite;
+      pointer-events: auto; cursor: pointer; padding: 0;
       -webkit-tap-highlight-color: transparent;
-      position: relative;
+      animation: candy-bob 3.8s ease-in-out infinite;
     }
-    .candy::after {
-      content: ""; position: absolute; top: 4px; left: 7px;
-      width: 9px; height: 5px; border-radius: 50%;
-      background: rgba(255,255,255,0.55);
-      transform: rotate(-20deg);
-      pointer-events: none;
+    .candy-float::after {
+      content: ""; position: absolute; top: 3px; left: 5px;
+      width: 7px; height: 4px; border-radius: 50%;
+      background: rgba(255,255,255,0.55); transform: rotate(-20deg); pointer-events: none;
     }
-    .candy:nth-child(3n) { animation-delay: -0.7s; width: 30px; height: 30px; }
-    .candy:nth-child(4n) { animation-delay: -1.4s; width: 28px; height: 28px; }
-    .candy:nth-child(5n) { animation-delay: -2.1s; width: 32px; height: 32px; }
-    .candy:active { transform: scale(1.12); }
-    @keyframes candy-wobble {
-      0%, 100% { transform: translateY(0) rotate(-2deg); }
-      50% { transform: translateY(-3px) rotate(2deg); }
+    .candy-float:nth-child(1) { left: 8%; top: 18%; animation-delay: 0s; }
+    .candy-float:nth-child(2) { left: 48%; top: 8%; animation-delay: -1.1s; width: 24px; height: 24px; }
+    .candy-float:nth-child(3) { left: 28%; top: 46%; animation-delay: -2.0s; width: 28px; height: 28px; }
+    .candy-float:nth-child(4) { left: 58%; top: 42%; animation-delay: -2.8s; width: 23px; height: 23px; }
+    @keyframes candy-bob {
+      0%, 100% { transform: translate(0, 0) rotate(-3deg); }
+      50% { transform: translate(3px, -5px) rotate(3deg); }
     }
-    .candy-bowl-name {
-      font-size: 12px; font-weight: 800; text-align: center;
+    .candy-jar-name {
+      font-size: 11px; font-weight: 800; text-align: center;
       color: #fff7ed; text-shadow: 0 1px 2px #451a03;
       max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      line-height: 1.15;
     }
-    .candy-empty, .candy-loading {
-      width: 100%; text-align: center; padding: 28px 12px;
+    .candy-jar-slot {
+      font-size: 9px; font-weight: 700; color: #fde68a; opacity: 0.9;
+      text-shadow: 0 1px 1px #451a03; line-height: 1;
+    }
+    .candy-loading {
+      grid-column: 1 / -1; text-align: center; padding: 28px 12px;
       color: #fff7ed; font-weight: 700; font-size: 13px;
       text-shadow: 0 1px 2px #451a03;
     }
+
+    /* Zoomed jar view */
+    .candy-zoom {
+      display: none; position: absolute; inset: 0; z-index: 3;
+      flex-direction: column; padding: 8px 4px 10px;
+      background: linear-gradient(180deg, rgba(255,245,247,0.96), rgba(196,154,108,0.96));
+      animation: candy-zoom-in 0.28s ease-out;
+    }
+    .candy-zoom.open { display: flex; }
+    @keyframes candy-zoom-in {
+      from { opacity: 0; transform: scale(0.86); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .candy-zoom-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; margin-bottom: 8px; flex: 0 0 auto;
+    }
+    .candy-zoom-title {
+      font-weight: 900; font-size: 15px; color: #9f1239; text-shadow: 0 1px 0 #fff;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .candy-zoom-stage {
+      flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center;
+    }
+    .candy-zoom-jar {
+      width: min(320px, 88vw); height: min(320px, 62vh);
+      position: relative;
+      background:
+        radial-gradient(ellipse 70% 32% at 50% 18%, rgba(255,255,255,0.55), transparent 58%),
+        linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(191,219,254,0.25) 42%, rgba(148,163,184,0.36) 100%);
+      border: 4px solid rgba(255,255,255,0.75);
+      border-radius: 50% 50% 46% 46% / 40% 40% 60% 60%;
+      box-shadow:
+        inset 0 -22px 28px rgba(15,23,42,0.18),
+        inset 0 10px 12px rgba(255,255,255,0.45),
+        0 12px 0 rgba(69,26,3,0.35);
+      overflow: hidden;
+    }
+    .candy-zoom-stage-inner {
+      position: absolute; left: 12%; right: 12%; top: 16%; bottom: 12%;
+      overflow: hidden;
+    }
+    .candy-zoom .candy-float {
+      width: 44px; height: 44px; border-width: 3px;
+    }
+    .candy-zoom .candy-float:nth-child(1) { left: 6%; top: 10%; }
+    .candy-zoom .candy-float:nth-child(2) { left: 40%; top: 4%; width: 40px; height: 40px; }
+    .candy-zoom .candy-float:nth-child(3) { left: 68%; top: 16%; width: 38px; height: 38px; }
+    .candy-zoom .candy-float:nth-child(4) { left: 18%; top: 38%; width: 46px; height: 46px; }
+    .candy-zoom .candy-float:nth-child(5) { left: 52%; top: 36%; width: 42px; height: 42px; }
+    .candy-zoom .candy-float:nth-child(6) { left: 8%; top: 62%; width: 40px; height: 40px; }
+    .candy-zoom .candy-float:nth-child(7) { left: 38%; top: 58%; width: 48px; height: 48px; }
+    .candy-zoom .candy-float:nth-child(8) { left: 66%; top: 60%; width: 40px; height: 40px; }
+    .candy-zoom .candy-float:nth-child(9) { left: 24%; top: 78%; width: 36px; height: 36px; }
+    .candy-zoom .candy-float:nth-child(10) { left: 56%; top: 78%; width: 38px; height: 38px; }
+
+    /* Info pop */
     .candy-pop {
-      position: absolute; inset: 0; z-index: 5;
+      position: absolute; inset: 0; z-index: 6;
       background: rgba(28, 10, 8, 0.55);
       display: none; align-items: center; justify-content: center;
-      padding: 20px;
+      padding: 18px;
     }
     .candy-pop.open { display: flex; }
     .candy-pop-card {
@@ -340,25 +409,61 @@
       width: min(320px, 100%); text-align: center;
       box-shadow: 0 16px 40px rgba(0,0,0,0.35);
       border: 3px solid #fb7185;
+      max-height: 90%; overflow-y: auto;
     }
     .candy-pop-card img {
-      width: 160px; height: 160px; border-radius: 50%;
+      width: 150px; height: 150px; border-radius: 50%;
       object-fit: cover; border: 4px solid #fff;
       box-shadow: 0 6px 16px rgba(0,0,0,0.25);
       background: #fecdd3;
     }
     .candy-pop-card h3 { margin: 12px 0 4px; font-size: 16px; color: #9f1239; }
     .candy-pop-card p { margin: 0 0 12px; font-size: 12px; color: #7c2d12; font-family: var(--font-mono); }
-    .candy-pop-card a {
+    .candy-pop-card a, .candy-pop-card .candy-showall {
       display: inline-block; margin: 0 4px 6px; padding: 8px 12px;
       border-radius: 999px; background: #9f1239; color: #fff;
-      text-decoration: none; font-weight: 800; font-size: 12px;
+      text-decoration: none; font-weight: 800; font-size: 12px; border: none; cursor: pointer;
     }
     .candy-pop-card a.secondary { background: #1d4ed8; }
+    .candy-pop-card .candy-showall { background: #059669; }
     .candy-pop-dismiss {
       margin-top: 4px; border: none; background: transparent;
       color: #7c2d12; font-weight: 700; cursor: pointer; font-size: 12px;
       text-decoration: underline;
+    }
+
+    /* Show-all infinite scroll */
+    .candy-showall-view {
+      display: none; position: absolute; inset: 0; z-index: 5;
+      flex-direction: column; background: #fff5f7;
+    }
+    .candy-showall-view.open { display: flex; }
+    .candy-showall-bar {
+      flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; padding: 10px 12px; border-bottom: 2px solid #fecdd3;
+      background: #fff;
+    }
+    .candy-showall-list {
+      flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 12px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .candy-card {
+      display: flex; gap: 12px; align-items: center;
+      background: #fff8f1; border: 2px solid #fda4af; border-radius: 14px;
+      padding: 10px; cursor: pointer; text-align: left;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .candy-card img, .candy-card .candy-card-ph {
+      width: 64px; height: 64px; border-radius: 50%; object-fit: cover;
+      border: 3px solid #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.18); flex: 0 0 auto;
+      background: #fecdd3;
+    }
+    .candy-card-meta { min-width: 0; flex: 1 1 auto; }
+    .candy-card-meta strong { display: block; color: #9f1239; font-size: 14px; }
+    .candy-card-meta span { display: block; color: #7c2d12; font-size: 11px; font-family: var(--font-mono); margin-top: 2px; }
+    .candy-card-meta em { display: block; color: #059669; font-size: 10px; font-style: normal; font-weight: 800; margin-top: 3px; }
+    .candy-showall-status {
+      text-align: center; padding: 14px; color: #9f1239; font-weight: 700; font-size: 12px;
     }
   </style>
 </head>
@@ -570,31 +675,59 @@
   </div>
 
 
+
   <!-- Hidden Candy Store easter egg -->
-  <div id="candyStore" class="candy-store" aria-hidden="true" role="dialog" aria-label="Candy Store free samples">
+  <div id="candyStore" class="candy-store" aria-hidden="true" role="dialog" aria-label="CAP Candy Store">
     <div class="candy-awning" aria-hidden="true"></div>
     <div class="candy-topbar">
       <div class="candy-title">CAP Candy Store</div>
       <button type="button" class="candy-close" id="candyClose" aria-label="Close candy store">×</button>
     </div>
-    <div class="candy-sub">Free samples from every active gate collection. Tap a candy!</div>
+    <div class="candy-sub">10 gate jars on the table. Tap a jar for more samples.</div>
     <div class="candy-shop">
-      <div class="candy-shelves" aria-hidden="true"></div>
-      <div class="candy-table">
-        <div class="candy-table-top" aria-hidden="true"></div>
-        <div id="candyBowls" class="candy-bowls">
-          <div class="candy-loading">Setting out the bowls…</div>
+      <div id="candyTableView" class="candy-table-view">
+        <div class="candy-table">
+          <div class="candy-table-top" aria-hidden="true"></div>
+          <div id="candyJars" class="candy-jars">
+            <div class="candy-loading">Setting out the jars…</div>
+          </div>
         </div>
       </div>
+
+      <div id="candyZoom" class="candy-zoom" aria-hidden="true">
+        <div class="candy-zoom-bar">
+          <button type="button" class="candy-back" id="candyZoomBack" aria-label="Back to table">←</button>
+          <div class="candy-zoom-title" id="candyZoomTitle">Jar</div>
+          <span style="width:40px"></span>
+        </div>
+        <div class="candy-zoom-stage">
+          <div class="candy-zoom-jar">
+            <div class="candy-zoom-stage-inner" id="candyZoomPile"></div>
+          </div>
+        </div>
+      </div>
+
       <div id="candyPop" class="candy-pop" aria-hidden="true">
         <div class="candy-pop-card">
-          <img id="candyPopImg" alt="" width="160" height="160" />
+          <img id="candyPopImg" alt="" width="150" height="150" />
           <h3 id="candyPopName">Collection</h3>
           <p id="candyPopId">Token #0</p>
           <a id="candyPopScan" href="#" target="_blank" rel="noopener noreferrer">BaseScan</a>
           <a id="candyPopOs" class="secondary" href="#" target="_blank" rel="noopener noreferrer">OpenSea</a>
+          <button type="button" class="candy-showall" id="candyShowAllBtn">Show all</button>
           <div><button type="button" class="candy-pop-dismiss" id="candyPopDismiss">Close</button></div>
         </div>
+      </div>
+
+      <div id="candyShowAll" class="candy-showall-view" aria-hidden="true">
+        <div class="candy-showall-bar">
+          <button type="button" class="candy-back" id="candyShowAllBack" aria-label="Back">←</button>
+          <div class="candy-zoom-title" id="candyShowAllTitle">Collection</div>
+          <button type="button" class="candy-close" id="candyShowAllClose" aria-label="Close">×</button>
+        </div>
+        <div class="candy-showall-list" id="candyShowAllList"></div>
+        <div id="candyShowAllStatus" class="candy-showall-status"></div>
+        <div id="candyShowAllSentinel" style="height:1px"></div>
       </div>
     </div>
   </div>
@@ -2195,11 +2328,19 @@
     }
 
 
+
     // ---------- Candy Store easter egg ----------
     const CANDY_TAP_WINDOW_MS = 2500;
     const CANDY_TAPS_NEEDED = 5;
-    const CANDY_PER_BOWL = 10;
-    const candyState = { open: false, taps: 0, lastTap: 0, loading: false, loadedKey: '' };
+    const CANDY_GATE_SLOTS = 10;
+    const CANDY_TABLE_COUNT = 4;
+    const CANDY_ZOOM_COUNT = 10;
+    const CANDY_SCROLL_BATCH = 8;
+    const candyState = {
+      open: false, taps: 0, lastTap: 0, loading: false, loadedKey: '',
+      slots: [], zoomSlot: -1, popCandy: null,
+      showAll: null, observer: null
+    };
 
     function candyFallbackStyle(seed) {
       const hues = [340, 300, 190, 45, 20, 260, 160];
@@ -2211,7 +2352,7 @@
       const ids = [];
       const seen = new Set();
       const push = (n) => {
-        if (n == null || n < 0 || seen.has(n)) return;
+        if (n == null || n < 0 || seen.has(n) || !Number.isFinite(n)) return;
         seen.add(n);
         ids.push(n);
       };
@@ -2223,14 +2364,12 @@
       }
       if (start != null && end != null && end >= start) {
         const span = end - start + 1;
-        const n = Math.min(count, span);
         if (span <= count) {
           for (let i = start; i <= end && ids.length < count; i++) push(i);
         } else {
-          for (let i = 0; i < n * 3 && ids.length < count; i++) {
+          for (let i = 0; i < count * 3 && ids.length < count; i++) {
             push(start + Math.floor(Math.random() * span));
           }
-          // Fill deterministically if random collided
           for (let i = start; i <= end && ids.length < count; i += Math.max(1, Math.floor(span / count))) push(i);
         }
       } else if (gate.displayTokenId != null) {
@@ -2244,8 +2383,9 @@
 
     function probeImageUrl(url) {
       return new Promise((resolve) => {
-        if (!url || !/^https:\/\//i.test(url) && !/^data:image\//i.test(url)) return resolve(null);
-        if (url.startsWith('data:image/')) return resolve(url);
+        if (!url) return resolve(null);
+        if (typeof url === 'string' && url.startsWith('data:image/')) return resolve(url);
+        if (!/^https:\/\//i.test(url)) return resolve(null);
         const img = new Image();
         let done = false;
         const finish = (v) => { if (!done) { done = true; resolve(v); } };
@@ -2257,7 +2397,6 @@
       });
     }
 
-    // When metadata JSON is CORS-blocked, guess common image URL layouts from tokenURI.
     function guessImageUrlsFromTokenUri(uri, tokenId) {
       if (!uri || typeof uri !== 'string') return [];
       const out = [];
@@ -2269,12 +2408,8 @@
         add(u.replace(/\/metadata\/(\d+)\.json(\?.*)?$/i, '/image/$1.png'));
         add(u.replace(/\/ipfs\/([^/?#]+)\/(\d+)\.json(\?.*)?$/i, '/ipfs/$1/$2.png'));
         add(u.replace(/\.json(\?.*)?$/i, '.png'));
-        add(u.replace(/\.json(\?.*)?$/i, '.jpg'));
-        add(u.replace(/\.json(\?.*)?$/i, '.webp'));
-        // Generic: .../{id}.json → .../images/{id}.png
         add(u.replace(/\/(\d+)\.json(\?.*)?$/i, '/images/$1.png'));
       }
-      // If tokenURI was only a base folder pattern we still try from host path
       if (tokenId != null && https[0]) {
         try {
           const base = https[0].replace(/\/[^/]*$/, '/');
@@ -2306,10 +2441,11 @@
       return null;
     }
 
-    const candyImagePattern = {}; // collectionLower -> { kind, prefix } after first success
+    const candyImagePattern = {};
 
-    async function loadCandiesForGate(gate) {
-      const ids = sampleTokenIds(gate, CANDY_PER_BOWL);
+    async function loadCandiesForGate(gate, count) {
+      if (!gate || !gate.collection) return [];
+      const ids = sampleTokenIds(gate, count);
       const candies = [];
       const key = (gate.collection || '').toLowerCase();
       const queue = ids.slice();
@@ -2329,59 +2465,183 @@
                 if (m) candyImagePattern[key] = { kind: 'prefix', prefix: m[1], ext: m[3] };
               }
             }
-            candies.push({ tokenId: id, src, collection: gate.collection, name: gate.name });
+            candies.push({ tokenId: id, src, collection: gate.collection, name: gate.name || gate.slotLabel });
           } catch (_) {
-            candies.push({ tokenId: id, src: null, collection: gate.collection, name: gate.name });
+            candies.push({ tokenId: id, src: null, collection: gate.collection, name: gate.name || gate.slotLabel });
           }
         }
       });
       await Promise.all(workers);
       candies.sort((a, b) => (b.src ? 1 : 0) - (a.src ? 1 : 0));
-      return candies.slice(0, CANDY_PER_BOWL);
+      return candies.slice(0, count);
     }
 
-    function renderCandyBowlSkeleton(gates) {
-      const root = document.getElementById('candyBowls');
-      if (!root) return;
-      if (!gates.length) {
-        root.innerHTML = `<div class="candy-empty">No active gate collections right now — the jars are empty.</div>`;
-        return;
+    function buildCandySlots() {
+      const active = availableGates.slice();
+      const slots = [];
+      for (let i = 0; i < CANDY_GATE_SLOTS; i++) {
+        const slotNum = String(i + 1).padStart(2, '0');
+        const g = active[i] || null;
+        const filled = !!(g && g.collection);
+        slots.push({
+          slot: i,
+          slotNum,
+          slotLabel: 'Gate ' + slotNum,
+          empty: !filled,
+          collection: filled ? g.collection : null,
+          displayTokenId: filled ? g.displayTokenId : null,
+          name: filled ? (g.name || shortAddr(g.collection)) : ('Gate ' + slotNum),
+          startId: filled ? g.startId : null,
+          endId: filled ? g.endId : null,
+          mintedSupply: filled ? g.mintedSupply : null,
+          metaState: filled ? g.metaState : 'empty',
+          tableCandies: [],
+          zoomCandies: []
+        });
       }
-      root.innerHTML = gates.map((g, i) => `
-        <div class="candy-bowl-wrap" data-bowl="${i}">
-          <div class="candy-tag">Free samples</div>
-          <div class="candy-bowl" aria-label="${escHtml(g.name)} samples">
-            <div class="candy-pile" id="candyPile-${i}">
-              <div class="candy" style="${candyFallbackStyle(i)}; opacity:0.55" aria-hidden="true"></div>
-              <div class="candy" style="${candyFallbackStyle(i+2)}; opacity:0.55" aria-hidden="true"></div>
-              <div class="candy" style="${candyFallbackStyle(i+4)}; opacity:0.55" aria-hidden="true"></div>
-            </div>
-          </div>
-          <div class="candy-bowl-name">${escHtml(g.name)}</div>
-        </div>`).join('');
+      return slots;
     }
 
-    function paintCandyPile(index, candies, gateName) {
-      const pile = document.getElementById('candyPile-' + index);
-      if (!pile) return;
-      pile.innerHTML = candies.map((c, n) => {
-        const style = c.src
-          ? `background-image:url('${String(c.src).replace(/'/g, '%27')}')`
-          : candyFallbackStyle((c.tokenId || 0) + n);
-        const label = `${gateName} #${c.tokenId}`;
-        return `<button type="button" class="candy" style="${style}" data-c="${index}" data-i="${n}" aria-label="${escHtml(label)}"></button>`;
-      }).join('');
-      pile.querySelectorAll('.candy').forEach(btn => {
+    function candyBtnHtml(c, n, extraClass) {
+      const style = c.src
+        ? `background-image:url('${String(c.src).replace(/'/g, '%27')}')`
+        : candyFallbackStyle((c.tokenId || 0) + n);
+      const label = `${c.name || 'NFT'} #${c.tokenId}`;
+      return `<button type="button" class="candy-float ${extraClass || ''}" style="${style}" data-tid="${c.tokenId}" aria-label="${escHtml(label)}"></button>`;
+    }
+
+    function bindCandyButtons(root, candies, slotIndex) {
+      if (!root) return;
+      root.querySelectorAll('.candy-float').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
-          const i = Number(btn.dataset.i);
-          const candy = candies[i];
-          if (candy) openCandyPop(candy);
+          const tid = Number(btn.dataset.tid);
+          const candy = candies.find(c => Number(c.tokenId) === tid) || candies[0];
+          if (candy) openCandyPop(candy, slotIndex);
         });
       });
     }
 
-    function openCandyPop(candy) {
+    function renderCandyTableSkeleton(slots) {
+      const root = document.getElementById('candyJars');
+      if (!root) return;
+      root.innerHTML = slots.map((s) => `
+        <button type="button" class="candy-jar-wrap ${s.empty ? 'empty' : ''}" data-slot="${s.slot}" aria-label="${escHtml(s.name)}">
+          <div class="candy-tag">${s.empty ? 'Empty' : 'Free samples'}</div>
+          <div class="candy-jar">
+            <div class="candy-float-stage" id="candyStage-${s.slot}"></div>
+          </div>
+          <div class="candy-jar-slot">GATE ${s.slotNum}</div>
+          <div class="candy-jar-name">${escHtml(s.empty ? 'Empty' : s.name)}</div>
+        </button>`).join('');
+      root.querySelectorAll('.candy-jar-wrap').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.slot);
+          const slot = candyState.slots[idx];
+          if (slot && !slot.empty) openCandyZoom(idx);
+        });
+      });
+    }
+
+    function paintTableJar(slotIndex) {
+      const slot = candyState.slots[slotIndex];
+      const stage = document.getElementById('candyStage-' + slotIndex);
+      const nameEl = document.querySelector(`[data-slot="${slotIndex}"] .candy-jar-name`);
+      if (nameEl && slot) nameEl.textContent = slot.empty ? 'Empty' : (slot.name || 'Collection');
+      if (!stage || !slot || slot.empty) {
+        if (stage) stage.innerHTML = '';
+        return;
+      }
+      const candies = slot.tableCandies || [];
+      stage.innerHTML = candies.map((c, n) => candyBtnHtml(c, n)).join('');
+      bindCandyButtons(stage, candies, slotIndex);
+    }
+
+    async function populateCandyStore() {
+      const root = document.getElementById('candyJars');
+      if (!root) return;
+      if (gateLoad.state === 'loading') {
+        root.innerHTML = `<div class="candy-loading">Setting out the jars…</div>`;
+        for (let i = 0; i < 40 && gateLoad.state === 'loading'; i++) {
+          await new Promise(r => setTimeout(r, 250));
+        }
+      } else if (gateLoad.state !== 'ready' && !availableGates.length) {
+        try { await loadGates(); } catch (_) {}
+      }
+      for (let i = 0; i < 40 && availableGates.some(g => g.metaState === 'loading'); i++) {
+        await new Promise(r => setTimeout(r, 200));
+      }
+      const slots = buildCandySlots();
+      const key = slots.map(s => (s.collection || 'empty') + ':' + (s.name || '')).join('|');
+      if (candyState.loadedKey === key && candyState.slots.length === CANDY_GATE_SLOTS) {
+        // still refresh names
+        candyState.slots = slots.map((s, i) => Object.assign(s, {
+          tableCandies: candyState.slots[i]?.tableCandies || [],
+          zoomCandies: candyState.slots[i]?.zoomCandies || []
+        }));
+        renderCandyTableSkeleton(candyState.slots);
+        candyState.slots.forEach((_, i) => paintTableJar(i));
+        return;
+      }
+      candyState.loading = true;
+      candyState.slots = slots;
+      renderCandyTableSkeleton(slots);
+      await Promise.all(slots.map(async (s, i) => {
+        if (s.empty) return;
+        try {
+          s.tableCandies = await loadCandiesForGate(s, CANDY_TABLE_COUNT);
+        } catch (_) {
+          s.tableCandies = [];
+        }
+        paintTableJar(i);
+      }));
+      candyState.loadedKey = key;
+      candyState.loading = false;
+    }
+
+    async function openCandyZoom(slotIndex) {
+      const slot = candyState.slots[slotIndex];
+      if (!slot || slot.empty) return;
+      candyState.zoomSlot = slotIndex;
+      const zoom = document.getElementById('candyZoom');
+      const title = document.getElementById('candyZoomTitle');
+      const pile = document.getElementById('candyZoomPile');
+      if (title) title.textContent = `${slot.slotLabel} · ${slot.name}`;
+      if (pile) pile.innerHTML = `<div class="candy-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">Scooping…</div>`;
+      if (zoom) {
+        zoom.classList.add('open');
+        zoom.setAttribute('aria-hidden', 'false');
+      }
+      if (!slot.zoomCandies.length) {
+        try {
+          // Prefer expanding from table candies first for instant paint
+          slot.zoomCandies = slot.tableCandies.slice();
+          if (slot.zoomCandies.length < CANDY_ZOOM_COUNT) {
+            const more = await loadCandiesForGate(slot, CANDY_ZOOM_COUNT);
+            const seen = new Set(slot.zoomCandies.map(c => c.tokenId));
+            for (const c of more) {
+              if (!seen.has(c.tokenId)) slot.zoomCandies.push(c);
+              if (slot.zoomCandies.length >= CANDY_ZOOM_COUNT) break;
+            }
+          }
+        } catch (_) {}
+      }
+      if (pile) {
+        pile.innerHTML = (slot.zoomCandies || []).map((c, n) => candyBtnHtml(c, n)).join('');
+        bindCandyButtons(pile, slot.zoomCandies || [], slotIndex);
+      }
+    }
+
+    function closeCandyZoom() {
+      const zoom = document.getElementById('candyZoom');
+      if (zoom) {
+        zoom.classList.remove('open');
+        zoom.setAttribute('aria-hidden', 'true');
+      }
+      candyState.zoomSlot = -1;
+    }
+
+    function openCandyPop(candy, slotIndex) {
       const pop = document.getElementById('candyPop');
       const img = document.getElementById('candyPopImg');
       const name = document.getElementById('candyPopName');
@@ -2389,14 +2649,16 @@
       const scan = document.getElementById('candyPopScan');
       const os = document.getElementById('candyPopOs');
       if (!pop || !img) return;
+      candyState.popCandy = candy;
+      candyState.popSlot = slotIndex;
       name.textContent = candy.name || 'Collection';
       idEl.textContent = `Token #${candy.tokenId}`;
       if (candy.src) {
         img.src = candy.src;
-        img.style.cssText = 'width:160px;height:160px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,0.25);';
+        img.style.cssText = 'width:150px;height:150px;border-radius:50%;object-fit:cover;border:4px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,0.25);';
       } else {
         img.removeAttribute('src');
-        img.style.cssText = 'width:160px;height:160px;border-radius:50%;border:4px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,0.25);' + candyFallbackStyle(candy.tokenId || 0);
+        img.style.cssText = 'width:150px;height:150px;border-radius:50%;border:4px solid #fff;box-shadow:0 6px 16px rgba(0,0,0,0.25);' + candyFallbackStyle(candy.tokenId || 0);
       }
       const addr = candy.collection;
       scan.href = `https://basescan.org/token/${addr}?a=${candy.tokenId}`;
@@ -2412,53 +2674,165 @@
       pop.setAttribute('aria-hidden', 'true');
     }
 
-    async function populateCandyStore() {
-      const root = document.getElementById('candyBowls');
-      if (!root) return;
-      // Ensure gates are loaded
-      if (gateLoad.state === 'loading' || !availableGates.length) {
-        root.innerHTML = `<div class="candy-loading">Setting out the bowls…</div>`;
-        if (gateLoad.state !== 'loading') {
-          try { await loadGates(); } catch (_) {}
-        } else {
-          // Wait briefly for in-flight load
-          for (let i = 0; i < 40 && gateLoad.state === 'loading'; i++) {
-            await new Promise(r => setTimeout(r, 250));
-          }
+    async function fetchOwnedTokenIds(collection) {
+      if (!userAddress || !collection) return [];
+      try {
+        const balRaw = await nftCallOpt(collection, 'balanceOf', userAddress);
+        const bal = balRaw == null ? 0 : Number(balRaw);
+        if (!bal || bal <= 0) return [];
+        const limit = Math.min(bal, 50);
+        const ids = [];
+        for (let i = 0; i < limit; i++) {
+          const tid = await nftCallOpt(collection, 'tokenOfOwnerByIndex', userAddress, i);
+          if (tid != null) ids.push(Number(tid));
+          else break; // not enumerable
+          await new Promise(r => setTimeout(r, 40));
         }
+        return ids;
+      } catch (_) {
+        return [];
       }
-      const gates = availableGates.slice();
-      const key = gates.map(g => g.collection.toLowerCase()).join(',') + '|' + gates.map(g => g.metaState).join(',');
-      if (candyState.loadedKey === key && root.querySelector('.candy-bowl-wrap')) return;
-      candyState.loading = true;
-      renderCandyBowlSkeleton(gates);
-      if (!gates.length) { candyState.loading = false; candyState.loadedKey = key; return; }
+    }
 
-      // Wait for names/supplies if still loading
-      for (let i = 0; i < 50 && gates.some(g => g.metaState === 'loading'); i++) {
-        await new Promise(r => setTimeout(r, 200));
+    function appendShowAllCard(candy, owned) {
+      const list = document.getElementById('candyShowAllList');
+      if (!list) return;
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'candy-card';
+      const imgHtml = candy.src
+        ? `<img src="${escHtml(candy.src)}" alt="" width="64" height="64" loading="lazy" />`
+        : `<div class="candy-card-ph" style="${candyFallbackStyle(candy.tokenId || 0)}"></div>`;
+      card.innerHTML = `${imgHtml}<div class="candy-card-meta"><strong>${escHtml(candy.name || 'Collection')}</strong><span>Token #${candy.tokenId}</span>${owned ? '<em>In your wallet</em>' : ''}</div>`;
+      card.addEventListener('click', () => openCandyPop(candy, candyState.popSlot));
+      const sentinel = document.getElementById('candyShowAllSentinel');
+      if (sentinel && sentinel.parentElement === list) list.insertBefore(card, sentinel);
+      else list.appendChild(card);
+    }
+
+    async function loadShowAllBatch() {
+      const st = candyState.showAll;
+      if (!st || st.loading || st.done) return;
+      st.loading = true;
+      const status = document.getElementById('candyShowAllStatus');
+      if (status) status.textContent = st.phase === 'owned' ? 'Loading wallet samples…' : 'Loading more samples…';
+
+      const batch = [];
+      if (st.phase === 'owned') {
+        while (st.ownedQueue.length && batch.length < CANDY_SCROLL_BATCH) {
+          batch.push({ id: st.ownedQueue.shift(), owned: true });
+        }
+        if (!st.ownedQueue.length) st.phase = 'seq';
+      }
+      if (st.phase === 'seq' && batch.length < CANDY_SCROLL_BATCH) {
+        while (st.nextId <= st.endId && batch.length < CANDY_SCROLL_BATCH) {
+          const id = st.nextId++;
+          if (st.shown.has(id)) continue;
+          batch.push({ id, owned: false });
+        }
+        if (st.nextId > st.endId) st.done = true;
       }
 
-      // Refresh names on skeleton
-      gates.forEach((g, i) => {
-        const el = document.querySelector(`[data-bowl="${i}"] .candy-bowl-name`);
-        if (el) el.textContent = g.name || shortAddr(g.collection);
-      });
+      for (const item of batch) {
+        if (st.shown.has(item.id)) continue;
+        st.shown.add(item.id);
+        let src = null;
+        const key = st.collection.toLowerCase();
+        const pat = candyImagePattern[key];
+        if (pat && pat.kind === 'prefix') src = await probeImageUrl(pat.prefix + item.id + pat.ext);
+        if (!src) src = await resolveCandyImage(st.collection, item.id);
+        appendShowAllCard({
+          tokenId: item.id,
+          src,
+          collection: st.collection,
+          name: st.name
+        }, item.owned);
+        await new Promise(r => setTimeout(r, 60));
+      }
 
-      await Promise.all(gates.map(async (g, i) => {
+      st.loading = false;
+      if (status) {
+        status.textContent = st.done
+          ? `All samples loaded (${st.shown.size})`
+          : `Loaded ${st.shown.size} · scroll for more`;
+      }
+      if (!st.done && batch.length === 0) {
+        // nothing added this round but not done — advance
+        st.done = st.nextId > st.endId && !st.ownedQueue.length;
+      }
+    }
+
+    async function openCandyShowAll() {
+      const candy = candyState.popCandy;
+      const slot = candyState.slots[candyState.popSlot] || candyState.slots[candyState.zoomSlot];
+      if (!candy || !candy.collection) return;
+      closeCandyPop();
+      const view = document.getElementById('candyShowAll');
+      const list = document.getElementById('candyShowAllList');
+      const title = document.getElementById('candyShowAllTitle');
+      const status = document.getElementById('candyShowAllStatus');
+      if (title) title.textContent = candy.name || slot?.name || 'Collection';
+      if (list) list.innerHTML = '';
+      if (status) status.textContent = 'Preparing…';
+      if (view) {
+        view.classList.add('open');
+        view.setAttribute('aria-hidden', 'false');
+      }
+
+      let start = slot?.startId;
+      let end = slot?.endId;
+      if (start == null || end == null) {
+        // refresh chain range
         try {
-          const candies = await loadCandiesForGate(g);
-          // stash for pop
-          g._candies = candies;
-          paintCandyPile(i, candies, g.name || shortAddr(g.collection));
-        } catch (_) {
-          paintCandyPile(i, Array.from({ length: 6 }, (_, n) => ({
-            tokenId: n, src: null, collection: g.collection, name: g.name
-          })), g.name || shortAddr(g.collection));
-        }
-      }));
-      candyState.loadedKey = key;
-      candyState.loading = false;
+          const info = await readGateChainData({ collection: candy.collection, displayTokenId: candy.tokenId });
+          start = info.startId;
+          end = info.endId;
+          if ((start == null || end == null) && info.mintedSupply) {
+            start = 0; end = info.mintedSupply - 1;
+          }
+        } catch (_) {}
+      }
+      if (start == null) start = 0;
+      if (end == null) end = start + 99;
+
+      const owned = await fetchOwnedTokenIds(candy.collection);
+      candyState.showAll = {
+        collection: candy.collection,
+        name: candy.name || slot?.name || 'Collection',
+        startId: start,
+        endId: end,
+        nextId: start,
+        ownedQueue: owned.slice(),
+        shown: new Set(),
+        phase: owned.length ? 'owned' : 'seq',
+        loading: false,
+        done: false
+      };
+
+      // Wire infinite scroll (sentinel lives at the end of the scrolling list)
+      let sentinel = document.getElementById('candyShowAllSentinel');
+      if (list && sentinel) list.appendChild(sentinel);
+      if (candyState.observer) candyState.observer.disconnect();
+      candyState.observer = new IntersectionObserver((entries) => {
+        if (entries.some(e => e.isIntersecting)) loadShowAllBatch();
+      }, { root: list, rootMargin: '240px' });
+      if (sentinel) candyState.observer.observe(sentinel);
+
+      await loadShowAllBatch();
+      await loadShowAllBatch();
+    }
+
+    function closeCandyShowAll() {
+      const view = document.getElementById('candyShowAll');
+      if (view) {
+        view.classList.remove('open');
+        view.setAttribute('aria-hidden', 'true');
+      }
+      if (candyState.observer) {
+        candyState.observer.disconnect();
+        candyState.observer = null;
+      }
+      candyState.showAll = null;
     }
 
     function openCandyStore() {
@@ -2469,6 +2843,8 @@
       candyState.open = true;
       document.body.style.overflow = 'hidden';
       closeCandyPop();
+      closeCandyZoom();
+      closeCandyShowAll();
       populateCandyStore();
     }
 
@@ -2480,14 +2856,12 @@
       candyState.open = false;
       document.body.style.overflow = '';
       closeCandyPop();
+      closeCandyZoom();
+      closeCandyShowAll();
     }
 
     function onBrandCandyTap(e) {
-      // Count pointerup only (avoids double-count with the trailing click on mobile).
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
+      if (e) { e.preventDefault(); e.stopPropagation(); }
       const now = Date.now();
       if (now - candyState.lastTap > CANDY_TAP_WINDOW_MS) candyState.taps = 0;
       candyState.lastTap = now;
@@ -2505,20 +2879,23 @@
         brand.setAttribute('role', 'button');
         brand.setAttribute('aria-label', 'CAPdropper');
         brand.addEventListener('pointerup', onBrandCandyTap, { passive: false });
-        // Swallow click so mobile doesn't select/zoom; do not count it as a tap.
         brand.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); }, { passive: false });
       }
-      const closeBtn = document.getElementById('candyClose');
-      if (closeBtn) closeBtn.addEventListener('click', closeCandyStore);
-      const dismiss = document.getElementById('candyPopDismiss');
-      if (dismiss) dismiss.addEventListener('click', closeCandyPop);
-      const pop = document.getElementById('candyPop');
-      if (pop) pop.addEventListener('click', (e) => { if (e.target === pop) closeCandyPop(); });
+      document.getElementById('candyClose')?.addEventListener('click', closeCandyStore);
+      document.getElementById('candyZoomBack')?.addEventListener('click', closeCandyZoom);
+      document.getElementById('candyPopDismiss')?.addEventListener('click', closeCandyPop);
+      document.getElementById('candyShowAllBtn')?.addEventListener('click', openCandyShowAll);
+      document.getElementById('candyShowAllBack')?.addEventListener('click', closeCandyShowAll);
+      document.getElementById('candyShowAllClose')?.addEventListener('click', () => { closeCandyShowAll(); closeCandyStore(); });
+      document.getElementById('candyPop')?.addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'candyPop') closeCandyPop();
+      });
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-          if (document.getElementById('candyPop')?.classList.contains('open')) closeCandyPop();
-          else if (candyState.open) closeCandyStore();
-        }
+        if (e.key !== 'Escape') return;
+        if (document.getElementById('candyPop')?.classList.contains('open')) closeCandyPop();
+        else if (document.getElementById('candyShowAll')?.classList.contains('open')) closeCandyShowAll();
+        else if (document.getElementById('candyZoom')?.classList.contains('open')) closeCandyZoom();
+        else if (candyState.open) closeCandyStore();
       });
     }
 
