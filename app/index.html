@@ -113,9 +113,28 @@
     .form-control:focus { outline: none; border-color: var(--gold-primary); }
     .form-control:read-only { background: #0c0e18; color: var(--gold-bright); border-color: #3b3524; cursor: not-allowed; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .shortcut-tokens { display: flex; gap: 8px; margin-top: 8px; }
-    .token-chip { background: #1e2235; border: 1px solid #323952; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--gold-bright); font-family: var(--font-mono); }
-    .token-chip:hover { border-color: var(--gold-primary); }
+    .shortcut-tokens { display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; align-items: flex-start; }
+    .token-pick {
+      display: inline-flex; flex-direction: column; align-items: center; gap: 5px;
+      background: #121523; border: 2px solid #2a3148; border-radius: 10px;
+      padding: 7px 8px 5px; cursor: pointer; flex: 1 1 0; min-width: 0; max-width: 170px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .token-pick:hover { border-color: #4b5563; }
+    .token-pick:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 2px; }
+    .token-pick.selected {
+      border-color: var(--gold-primary); background: #221c0e;
+      box-shadow: 0 0 12px var(--gold-glow);
+    }
+    .token-pick img {
+      height: 38px; width: auto; max-width: 100%; display: block;
+      image-rendering: pixelated; pointer-events: none;
+    }
+    .token-pick span {
+      font-size: 11px; font-weight: 800; letter-spacing: 0.06em;
+      color: var(--gold-bright); font-family: var(--font-mono);
+    }
 
     /* Interactive Gate Chooser */
     .gate-selector-wrap { background: #0d101a; border: 1px solid #3b3524; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
@@ -196,12 +215,16 @@
       
       <div class="form-group">
         <label>ERC-20 Token Contract Address (Base)</label>
-        <input type="text" id="tokenAddress" class="form-control" value="0xB8d59c7B33054BEdA610B2b2D38EA38694cdfaBd">
-        <div class="shortcut-tokens">
-          <span class="token-chip" onclick="setToken('0xB8d59c7B33054BEdA610B2b2D38EA38694cdfaBd')">Midas Token</span>
-          <span class="token-chip" onclick="setToken('0x22af33fe49fd1fa80c7149773dde5890d3c76f3b')">$BNKR</span>
-          <span class="token-chip" onclick="setToken('0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913')">USDC</span>
-          <span class="token-chip" onclick="setToken('0x4200000000000000000000000000000000000006')">WETH</span>
+        <input type="text" id="tokenAddress" class="form-control" value="" placeholder="Token contract 0x…" autocomplete="off" spellcheck="false" oninput="onTokenAddressInput()">
+        <div class="shortcut-tokens" role="group" aria-label="Quick-fill drop tokens">
+          <button type="button" class="token-pick" id="tokenPickGear" data-token="0x5880cD05605A549f1DAb01a53ca61Ee559244bD1" onclick="setToken('0x5880cD05605A549f1DAb01a53ca61Ee559244bD1')" aria-label="Fill GEAR token" title="Fill GEAR token">
+            <img src="/gear-logo-cutout.png" alt="" height="38" width="152" />
+            <span>GEAR</span>
+          </button>
+          <button type="button" class="token-pick" id="tokenPickCaph" data-token="0x1D1bCD1459259429ACcde23e24E1782f83e97bA3" onclick="setToken('0x1D1bCD1459259429ACcde23e24E1782f83e97bA3')" aria-label="Fill CAPH token" title="Fill CAPH token">
+            <img src="/caph-logo-cutout.png" alt="" height="38" width="152" />
+            <span>CAPH</span>
+          </button>
         </div>
       </div>
 
@@ -1556,8 +1579,37 @@
       if (img._gateTimer) clearTimeout(img._gateTimer);
     }
 
+    const TOKEN_PRESETS = {
+      GEAR: '0x5880cD05605A549f1DAb01a53ca61Ee559244bD1',
+      CAPH: '0x1D1bCD1459259429ACcde23e24E1782f83e97bA3'
+    };
+
+    function normalizeAddr(a) {
+      try { return (a || '').trim().toLowerCase(); } catch (_) { return ''; }
+    }
+
+    function syncTokenPickSelection() {
+      const cur = normalizeAddr(document.getElementById('tokenAddress')?.value);
+      document.querySelectorAll('.token-pick').forEach(btn => {
+        const match = cur && normalizeAddr(btn.dataset.token) === cur;
+        btn.classList.toggle('selected', !!match);
+        btn.setAttribute('aria-pressed', match ? 'true' : 'false');
+      });
+    }
+
+    function onTokenAddressInput() {
+      syncTokenPickSelection();
+      updatePreview();
+    }
+
     function setToken(addr) {
-      document.getElementById('tokenAddress').value = addr;
+      const el = document.getElementById('tokenAddress');
+      if (!el) return;
+      el.value = addr;
+      // Fire the same path as typing so any listeners / preview refresh stay in sync.
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      syncTokenPickSelection();
       updatePreview();
     }
 
@@ -1940,6 +1992,7 @@
     renderWalletButton(false);
     initWalletFromMemory();
     renderGateCards();
+    syncTokenPickSelection();
     updatePreview();
     loadGates();
   </script>
